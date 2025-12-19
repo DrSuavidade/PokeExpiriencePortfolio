@@ -1,0 +1,232 @@
+import React, { useState, useEffect } from 'react';
+import { useGameStore } from '../state/gameStore';
+import { starters } from '../data/monsters';
+import { buildings } from '../data/buildings';
+import { Menu } from './Menu';
+
+export const UIOverlay = () => {
+  const { scene, starter, activeBuildingId, setScene, progress, markDefeated, resetGame, interactionText, interactAction } = useGameStore();
+  const [battleLog, setBattleLog] = useState<string[]>([]);
+  const [battleTurn, setBattleTurn] = useState(0);
+
+  // Keyboard listener for interactions
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if ((e.key === 'e' || e.key === 'E' || e.code === 'Space') && interactAction) {
+            interactAction();
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [interactAction]);
+
+  // --- LANDING UI ---
+  if (scene === 'landing') {
+    return (
+      <div className="fixed bottom-10 left-0 right-0 z-10 flex flex-col items-center pointer-events-none">
+        <div className="bg-black/70 backdrop-blur text-white p-6 rounded-xl border-4 border-white pixel-font text-center max-w-2xl w-full mx-4">
+          <h1 className="text-2xl mb-4 text-yellow-400">PORTFOLIO QUEST</h1>
+          <p className="text-sm leading-relaxed">
+            Welcome, traveler. <br/>
+            Click a sphere to choose your companion and begin the journey.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- GENERAL HUD (Interaction Prompt) ---
+  const interactionPrompt = interactionText && (
+      <div className="fixed bottom-24 left-0 right-0 z-50 flex justify-center pointer-events-none animate-bounce">
+          <div className="bg-black/80 text-white px-6 py-3 rounded-full border-2 border-white pixel-font shadow-lg flex items-center gap-3">
+              <span className="bg-white text-black w-6 h-6 rounded flex items-center justify-center font-bold text-xs">E</span>
+              {interactionText}
+          </div>
+      </div>
+  );
+
+  // --- HOME UI ---
+  if (scene === 'home') {
+    return (
+      <>
+        {interactionPrompt}
+        <div className="fixed top-4 right-4 z-10">
+            <Menu />
+        </div>
+        <div className="fixed bottom-4 left-4 z-10 text-white/50 text-xs pixel-font">
+            WASD / Arrows to Move
+        </div>
+      </>
+    );
+  }
+
+  // --- CITY UI ---
+  if (scene === 'city') {
+    return (
+      <>
+        {interactionPrompt}
+        <div className="fixed top-4 left-4 z-10 bg-black/50 p-2 rounded text-white pixel-font text-xs">
+          Map: City Center
+        </div>
+        <div className="fixed top-4 right-4 z-10">
+          <Menu />
+        </div>
+        <div className="fixed bottom-4 left-4 z-10 text-white/70 text-xs pixel-font">
+            WASD to Move • Walk to buildings
+        </div>
+      </>
+    );
+  }
+
+  // --- BUILDING UI ---
+  if (scene === 'building') {
+    const building = buildings.find(b => b.id === activeBuildingId);
+    if (!building) return null;
+    
+    const isDefeated = progress.defeatedNPCs[building.id];
+
+    return (
+      <div className="fixed inset-0 z-20 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="bg-white text-black w-full max-w-4xl h-[80vh] rounded-lg shadow-2xl flex flex-col overflow-hidden relative">
+            
+            {/* Header */}
+            <div className="bg-gray-900 text-white p-6 flex justify-between items-center">
+                <h2 className="text-2xl font-bold pixel-font">{building.content.title}</h2>
+                <button 
+                    onClick={() => setScene('city')}
+                    className="text-gray-400 hover:text-white"
+                >
+                    ESC
+                </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 p-8 overflow-y-auto font-sans">
+                <p className="text-lg mb-6 leading-relaxed">{building.content.body}</p>
+                <ul className="space-y-3">
+                    {building.content.items?.map((item, i) => (
+                        <li key={i} className="flex items-center p-3 bg-gray-100 rounded">
+                            <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                            {item}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            {/* Footer / NPC Interaction */}
+            <div className="bg-gray-100 p-6 border-t border-gray-300 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl`} style={{backgroundColor: building.color}}>
+                        NPC
+                    </div>
+                    <div>
+                        <p className="font-bold">{building.npcName}</p>
+                        <p className="text-sm text-gray-600">
+                            {isDefeated ? "Impressed by your skills." : "I challenge you to a duel!"}
+                        </p>
+                    </div>
+                </div>
+                
+                {!isDefeated ? (
+                    <button 
+                        onClick={() => setScene('battle')}
+                        className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded pixel-font shadow-lg transform transition hover:scale-105"
+                    >
+                        BATTLE!
+                    </button>
+                ) : (
+                    <div className="text-green-600 font-bold pixel-font">DEFEATED</div>
+                )}
+            </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- BATTLE UI ---
+  if (scene === 'battle') {
+    const building = buildings.find(b => b.id === activeBuildingId);
+    const myMonster = starters.find(s => s.id === starter);
+
+    const handleAttack = () => {
+        setBattleTurn(t => t + 1);
+        setBattleLog(prev => [...prev, `${myMonster?.name} used Attack! It's super effective!`]);
+        
+        setTimeout(() => {
+            setBattleLog(prev => [...prev, `${building?.npcName}'s monster fainted!`]);
+            setTimeout(() => {
+                if(activeBuildingId) markDefeated(activeBuildingId);
+                setScene('building');
+                setBattleLog([]);
+            }, 1500);
+        }, 1000);
+    };
+
+    return (
+        <div className="fixed inset-0 z-30 pointer-events-none flex flex-col justify-between p-4">
+            {/* HUD Top Left - Opponent */}
+            <div className="self-start bg-white/90 p-4 rounded-lg border-2 border-black min-w-[200px]">
+                <h3 className="font-bold">{building?.npcName}</h3>
+                <div className="w-full h-2 bg-gray-300 mt-2 rounded-full overflow-hidden">
+                    <div className="h-full bg-red-500 w-[40%]"></div>
+                </div>
+            </div>
+
+            {/* HUD Bottom Right - Player */}
+            <div className="self-end bg-white/90 p-4 rounded-lg border-2 border-black min-w-[200px] mb-32">
+                <h3 className="font-bold">{myMonster?.name}</h3>
+                <div className="w-full h-2 bg-gray-300 mt-2 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500 w-full"></div>
+                </div>
+                <p className="text-xs mt-1">LVL 5</p>
+            </div>
+
+            {/* Battle Text Box */}
+            <div className="absolute bottom-4 left-4 right-4 h-32 bg-gray-900/90 border-4 border-white rounded-lg p-4 flex pointer-events-auto">
+                <div className="flex-1 text-white pixel-font text-sm leading-6 overflow-y-auto">
+                    {battleLog.length === 0 ? `Wild ${building?.npcName} wants to fight!` : battleLog.map((log, i) => <div key={i}>{log}</div>)}
+                </div>
+                <div className="w-48 ml-4 grid grid-cols-1 gap-2">
+                    <button 
+                        onClick={handleAttack}
+                        className="bg-white hover:bg-gray-200 text-black border-2 border-gray-400 rounded pixel-font text-xs"
+                    >
+                        ATTACK
+                    </button>
+                    <button 
+                        onClick={() => setScene('building')}
+                        className="bg-white hover:bg-gray-200 text-black border-2 border-gray-400 rounded pixel-font text-xs"
+                    >
+                        RUN
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+  }
+
+  // --- ENDING UI ---
+  if (scene === 'ending') {
+     return (
+         <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center text-white p-8 text-center animate-fade-in">
+             <h1 className="text-4xl text-yellow-400 pixel-font mb-8">CONGRATULATIONS!</h1>
+             <p className="max-w-xl text-lg mb-8 leading-relaxed">
+                 You have explored the city, defeated the bugs, and uncovered the portfolio.
+             </p>
+             <div className="bg-white/10 p-8 rounded-lg mb-8 backdrop-blur">
+                 <h2 className="text-xl font-bold mb-4">Let's Connect</h2>
+                 <p className="mb-2">email@example.com</p>
+                 <p>linkedin.com/in/you</p>
+             </div>
+             <button 
+                onClick={resetGame}
+                className="px-8 py-4 bg-white text-black pixel-font hover:scale-105 transition"
+             >
+                 PLAY AGAIN
+             </button>
+         </div>
+     )
+  }
+
+  return null;
+};
