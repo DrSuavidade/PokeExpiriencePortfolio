@@ -6,7 +6,7 @@ export type SceneId =
   | "battle"
   | "ending";
 
-export type StarterId = "emberfox" | "leafcub" | "aquafin";
+export type StarterId = "slothie" | "tigguin" | "elcoon";
 
 export interface Monster {
   id: StarterId;

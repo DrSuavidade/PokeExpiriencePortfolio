@@ -18,14 +18,24 @@ const Pokeball = ({ position, color, onClick, isHovered }: any) => {
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += 0.01;
       if (isHovered) {
+        // Gently orient to front when hovered
+        const targetRot =
+          Math.round(meshRef.current.rotation.y / (Math.PI * 2)) *
+          (Math.PI * 2);
+        meshRef.current.rotation.y = THREE.MathUtils.lerp(
+          meshRef.current.rotation.y,
+          targetRot,
+          0.1
+        );
+
         meshRef.current.position.y = THREE.MathUtils.lerp(
           meshRef.current.position.y,
           position[1] + 0.5,
           0.1
         );
       } else {
+        meshRef.current.rotation.y += 0.01;
         meshRef.current.position.y = THREE.MathUtils.lerp(
           meshRef.current.position.y,
           position[1],
@@ -259,9 +269,13 @@ export const LandingScene = () => {
         {/* Starters */}
         <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
           {starters.map((starter, index) => (
-            <group key={starter.id} position={[(index - 1) * 2.5, 0, 0]}>
+            <group
+              key={starter.id}
+              position={[(index - 1) * 2.5, 0, index === 1 ? 0.5 : 0]}
+            >
               <Pokeball
-                position={[0, 0.5, 1]}
+                key={`${starter.id}-${starter.color}`}
+                position={[0, 0.5, 0.5]}
                 color={starter.color}
                 onClick={() => chooseStarter(starter.id)}
                 isHovered={hovered === starter.id}
@@ -276,7 +290,7 @@ export const LandingScene = () => {
 
               <Text
                 visible={hovered === starter.id}
-                position={[0, 2, 0]}
+                position={[0, 2.2, 0]}
                 fontSize={0.3}
                 color="white"
                 anchorX="center"
