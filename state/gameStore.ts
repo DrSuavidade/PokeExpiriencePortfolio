@@ -22,6 +22,8 @@ interface GameState {
   resetGame: () => void;
   introDone: boolean;
   setIntroDone: (done: boolean) => void;
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -35,12 +37,32 @@ export const useGameStore = create<GameState>((set, get) => ({
   interactAction: null,
   introDone: false,
   setIntroDone: (done) => set({ introDone: done }),
+  isLoading: false,
+  setIsLoading: (loading) => set({ isLoading: loading }),
 
-  setScene: (scene) => set({ scene, interactionText: null, interactAction: null }),
+  setScene: (scene) => {
+    set({ isLoading: true });
+    setTimeout(() => {
+      set({ scene, interactionText: null, interactAction: null });
+      setTimeout(() => set({ isLoading: false }), 800);
+    }, 600);
+  },
 
-  chooseStarter: (starter) => set({ starter, scene: "home" }),
+  chooseStarter: (starter) => {
+    set({ isLoading: true });
+    setTimeout(() => {
+      set({ starter, scene: "home" });
+      setTimeout(() => set({ isLoading: false }), 800);
+    }, 600);
+  },
 
-  enterBuilding: (buildingId) => set({ activeBuildingId: buildingId, scene: "building", interactionText: null, interactAction: null }),
+  enterBuilding: (buildingId) => {
+    set({ isLoading: true });
+    setTimeout(() => {
+      set({ activeBuildingId: buildingId, scene: "building", interactionText: null, interactAction: null });
+      setTimeout(() => set({ isLoading: false }), 800);
+    }, 600);
+  },
 
   markDefeated: (buildingId) => {
     const { progress } = get();
@@ -61,13 +83,19 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   setInteraction: (text, action) => set({ interactionText: text, interactAction: action }),
 
-  resetGame: () => set({
-    scene: "landing",
-    starter: undefined,
-    activeBuildingId: undefined,
-    menuOpen: false,
-    progress: { defeatedNPCs: {}, unlockedSecret: false },
-    interactionText: null,
-    interactAction: null
-  })
+  resetGame: () => {
+    set({ isLoading: true });
+    setTimeout(() => {
+      set({
+        scene: "landing",
+        starter: undefined,
+        activeBuildingId: undefined,
+        menuOpen: false,
+        progress: { defeatedNPCs: {}, unlockedSecret: false },
+        interactionText: null,
+        interactAction: null
+      });
+      setTimeout(() => set({ isLoading: false }), 800);
+    }, 600);
+  }
 }));

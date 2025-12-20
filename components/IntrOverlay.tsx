@@ -56,35 +56,44 @@ const GameBoyIntro: React.FC<GameBoyIntroProps> = ({ onComplete }) => {
   }, [stage, animatedLetters]);
 
   // ✅ TRUE stagger: activate 1 more character every STAGGER interval
-  // ✅ TRUE stagger that never "sticks" on lag: uses rAF + time-based catch-up
+  // ✅ True stagger + catch-up, but WITHOUT per-frame updates (less lag)
   useEffect(() => {
     if (stage !== 1) return;
 
     const stepMs = Math.max(10, Math.round(STAGGER_S * 1000));
     const start = performance.now();
 
-    let rafId = 0;
+    let timeoutId: number | null = null;
+    let last = 0;
 
-    const tick = (now: number) => {
-      // 1 letter immediately, then +1 every stepMs, catching up after lag
-      const elapsed = now - start;
+    const tick = () => {
+      const now = performance.now();
       const shouldBe = Math.min(
         animatedLetters,
-        1 + Math.floor(elapsed / stepMs)
+        1 + Math.floor((now - start) / stepMs)
       );
 
-      setActiveCount((prev) => (prev < shouldBe ? shouldBe : prev));
+      if (shouldBe !== last) {
+        last = shouldBe;
+        setActiveCount(shouldBe);
+      }
 
-      if (shouldBe < animatedLetters) {
-        rafId = requestAnimationFrame(tick);
+      if (last < animatedLetters) {
+        // Schedule next check close to the next boundary, but it will still "catch up" if delayed.
+        const nextBoundary = start + last * stepMs;
+        const delay = Math.max(0, nextBoundary - now);
+        timeoutId = window.setTimeout(tick, delay);
       }
     };
 
-    // start
+    // start with first letter immediately
+    last = 1;
     setActiveCount(1);
-    rafId = requestAnimationFrame(tick);
+    timeoutId = window.setTimeout(tick, stepMs);
 
-    return () => cancelAnimationFrame(rafId);
+    return () => {
+      if (timeoutId != null) window.clearTimeout(timeoutId);
+    };
   }, [stage, animatedLetters, STAGGER_S]);
 
   return (
