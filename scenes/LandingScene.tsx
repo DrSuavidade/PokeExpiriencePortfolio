@@ -130,7 +130,7 @@ export function Bag(props: any) {
 
   useLayoutEffect(() => {
     // Reset so this can run multiple times without drifting (HMR / StrictMode)
-    model.position.set(0, 0, 0);
+    model.position.set(0, 0, -1.5);
     model.scale.set(1, 1, 1);
 
     model.traverse((o: any) => {
@@ -259,11 +259,7 @@ export const LandingScene = () => {
 
         {/* Bag */}
         <Float speed={0.1} rotationIntensity={0.1} floatIntensity={0.1}>
-          <Bag
-            position={[0, 0.2, 0]}
-            rotation={[0, Math.PI / 2, 0]}
-            scale={7}
-          />
+          <Bag rotation={[0, Math.PI / 2, 0]} />
         </Float>
 
         {/* Starters */}
