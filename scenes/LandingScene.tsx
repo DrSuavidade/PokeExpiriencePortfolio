@@ -8,6 +8,7 @@ import {
   useCursor,
   ContactShadows,
   useGLTF,
+  Center,
 } from "@react-three/drei";
 import * as THREE from "three";
 import { starters } from "../data/monsters";
@@ -129,37 +130,19 @@ export function Bag(props: any) {
   const model = useMemo(() => src.clone(true), [src]);
 
   useLayoutEffect(() => {
-    // Reset so this can run multiple times without drifting (HMR / StrictMode)
-    model.position.set(0, 0, -1.5);
-    model.scale.set(1, 1, 1);
-
     model.traverse((o: any) => {
       if (o.isMesh) {
         o.castShadow = true;
         o.receiveShadow = true;
-        o.frustumCulled = false;
       }
     });
-
-    // Recompute bounds
-    const box = new THREE.Box3().setFromObject(model);
-    const center = new THREE.Vector3();
-    const size = new THREE.Vector3();
-    box.getCenter(center);
-    box.getSize(size);
-
-    // IMPORTANT: set absolute offset (not sub)
-    model.position.set(-center.x, -center.y, -center.z);
-
-    const maxAxis = Math.max(size.x, size.y, size.z) || 1;
-    const targetSize = 4;
-    model.scale.setScalar(targetSize / maxAxis);
   }, [model]);
 
-  // Apply your desired position/rotation/scale on an outer group
   return (
     <group {...props}>
-      <primitive object={model} />
+      <Center top>
+        <primitive object={model} />
+      </Center>
     </group>
   );
 }
@@ -259,7 +242,11 @@ export const LandingScene = () => {
 
         {/* Bag */}
         <Float speed={0.1} rotationIntensity={0.1} floatIntensity={0.1}>
-          <Bag rotation={[0, Math.PI / 2, 0]} />
+          <Bag
+            position={[0, 0.2, -4]}
+            rotation={[0, Math.PI / 2, 0]}
+            scale={7}
+          />
         </Float>
 
         {/* Starters */}
