@@ -24,6 +24,14 @@ interface GameState {
   setIntroDone: (done: boolean) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+
+  // Dialog System
+  dialog: {
+    open: boolean;
+    title?: string;
+    body?: string;
+  };
+  setDialog: (dialog: { open: boolean; title?: string; body?: string }) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -39,6 +47,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   setIntroDone: (done) => set({ introDone: done }),
   isLoading: false,
   setIsLoading: (loading) => set({ isLoading: loading }),
+
+  dialog: { open: false },
+  setDialog: (dialog) => set({ dialog }),
 
   setScene: (scene) => {
     set({ isLoading: true });

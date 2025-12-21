@@ -2,8 +2,11 @@ import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useAnimations, useGLTF } from "@react-three/drei";
-// IMPORTANT: correct clone for skinned meshes
 import { SkeletonUtils } from "three-stdlib";
+
+import { useGameStore } from "../state/gameStore";
+import type { Rect } from "../utils/collision2d";
+import { resolveXZ } from "../utils/collision2d";
 
 type ActionName = "Idle" | "Walk" | "Interact";
 
@@ -13,6 +16,10 @@ type Props = {
   bounds?: { x: number; z: number };
   cameraFollow?: boolean;
   onInteract?: () => void;
+
+  // ✅ new
+  colliders?: Rect[];
+  radius?: number; // player "collision radius" in world units
 };
 
 export const PlayerCharacter = forwardRef<THREE.Group, Props>(
@@ -23,19 +30,19 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       bounds = { x: 10, z: 10 },
       cameraFollow = false,
       onInteract,
+      colliders = [],
+      radius = 0.35,
     },
     ref
   ) => {
     const internalRef = useRef<THREE.Group>(null);
     const groupRef =
-      (ref as React.MutableRefObject<THREE.Group | null>) || internalRef;
+      (ref as React.RefObject<THREE.Group | null>) || internalRef;
 
-    // ✅ FIX: correct path/casing for your file: public/models/Player.glb
+    const dialog = useGameStore((s) => s.dialog);
+
     const { scene, animations } = useGLTF("/models/Player.glb");
-
-    // ✅ FIX: SkeletonUtils.clone is safe for rigged/skinned models
     const model = useMemo(() => SkeletonUtils.clone(scene), [scene]);
-
     const { actions, mixer } = useAnimations(animations, groupRef);
 
     const keys = useRef<Record<string, boolean>>({});
@@ -49,16 +56,28 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       groupRef.current.rotation.set(0, 0, 0);
     }, [position, groupRef]);
 
-    // Keyboard listeners (same style as your old cube Player.tsx)
+    // If dialog opens, stop interact state + clear keys
+    useEffect(() => {
+      if (dialog.open) {
+        setIsInteracting(false);
+        keys.current = {};
+        if (currentAction.current !== "Idle") {
+          // try to return to idle visually
+          actions?.Idle?.reset().fadeIn(0.08).play();
+          currentAction.current = "Idle";
+        }
+      }
+    }, [dialog.open, actions]);
+
+    // Keyboard listeners
     useEffect(() => {
       const down = (e: KeyboardEvent) => {
         keys.current[e.code] = true;
 
         if (e.code === "KeyE") {
-          // trigger interact one-shot
-          if (!isInteracting) {
+          if (!isInteracting && !dialog.open) {
             setIsInteracting(true);
-            onInteract?.();
+            onInteract?.(); // your waypoint action (opens dialog / changes scene)
           }
         }
       };
@@ -70,16 +89,25 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
         window.removeEventListener("keydown", down);
         window.removeEventListener("keyup", up);
       };
-    }, [isInteracting, onInteract]);
+    }, [isInteracting, onInteract, dialog.open]);
+
+    // Shadows
+    useEffect(() => {
+      model.traverse((o: any) => {
+        if (o?.isMesh) {
+          o.castShadow = true;
+          o.receiveShadow = true;
+          o.frustumCulled = false;
+        }
+      });
+    }, [model]);
 
     const play = (name: ActionName, fade = 0.12) => {
       if (!actions) return;
       const next = actions[name];
       if (!next) return;
 
-      // fade out others
       Object.values(actions).forEach((a) => a?.fadeOut(fade));
-
       next.reset().fadeIn(fade).play();
       currentAction.current = name;
     };
@@ -100,7 +128,7 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [actions]);
 
-    // When Interact finishes -> unlock + return to Idle/Walk
+    // When Interact finishes -> unlock
     useEffect(() => {
       if (!mixer) return;
 
@@ -117,15 +145,18 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
     useFrame((state, dt) => {
       if (!groupRef.current) return;
 
-      // Interact animation control
-      if (isInteracting) {
-        if (currentAction.current !== "Interact") {
-          play("Interact", 0.08);
-        }
-        return; // optional: freeze movement while interacting
+      // Freeze while dialog open
+      if (dialog.open) {
+        if (currentAction.current !== "Idle") play("Idle", 0.12);
+        return;
       }
 
-      // Movement input
+      // Interact anim control
+      if (isInteracting) {
+        if (currentAction.current !== "Interact") play("Interact", 0.08);
+        return;
+      }
+
       const moveSpeed = speed * dt;
 
       let dx = 0;
@@ -145,27 +176,29 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
         if (currentAction.current !== "Idle") play("Idle", 0.12);
       }
 
-      // Apply movement + bounds
-      const x = groupRef.current.position.x;
-      const z = groupRef.current.position.z;
+      // Proposed move (with outer clamp)
+      const prevX = groupRef.current.position.x;
+      const prevZ = groupRef.current.position.z;
 
-      groupRef.current.position.x = THREE.MathUtils.clamp(
-        x + dx,
-        -bounds.x,
-        bounds.x
-      );
-      groupRef.current.position.z = THREE.MathUtils.clamp(
-        z + dz,
-        -bounds.z,
-        bounds.z
-      );
+      let nextX = THREE.MathUtils.clamp(prevX + dx, -bounds.x, bounds.x);
+      let nextZ = THREE.MathUtils.clamp(prevZ + dz, -bounds.z, bounds.z);
 
-      // Face travel direction (Pokemon-like)
+      // ✅ Collider resolution (slide)
+      if (colliders.length > 0 && moving) {
+        const res = resolveXZ(prevX, prevZ, nextX, nextZ, radius, colliders);
+        nextX = res.x;
+        nextZ = res.z;
+      }
+
+      groupRef.current.position.x = nextX;
+      groupRef.current.position.z = nextZ;
+
+      // Face travel direction
       if (moving) {
         groupRef.current.rotation.y = Math.atan2(-dx, -dz);
       }
 
-      // Optional camera follow (you can keep false in HomeRoom)
+      // Optional camera follow
       if (cameraFollow) {
         const targetCamPos = new THREE.Vector3(
           groupRef.current.position.x,
