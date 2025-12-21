@@ -108,6 +108,19 @@ export const CityMapScene = () => {
       }
     });
 
+    cloned.traverse((o: any) => {
+      if (o?.isMesh && o.material) {
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach((m: any) => {
+          m.transparent = false;
+          m.depthWrite = true;
+          m.depthTest = true;
+          m.alphaTest = 0; // important if exporter sets it oddly
+          m.needsUpdate = true;
+        });
+      }
+    });
+
     // Auto bounds from the whole town (for clamp fallback)
     const worldBox = new THREE.Box3().setFromObject(cloned);
     const maxX = Math.max(Math.abs(worldBox.min.x), Math.abs(worldBox.max.x));
