@@ -26,6 +26,8 @@ export const CityMapScene = () => {
   const enterBuilding = useGameStore((s) => s.enterBuilding);
   const setScene = useGameStore((s) => s.setScene);
   const setInteraction = useGameStore((s) => s.setInteraction);
+  const returnWaypoint = useGameStore((s) => s.returnWaypoint);
+  const setReturnWaypoint = useGameStore((s) => s.setReturnWaypoint);
 
   const dialog = useGameStore((s) => s.dialog);
   const setDialog = useGameStore((s) => s.setDialog);
@@ -127,10 +129,11 @@ export const CityMapScene = () => {
     const maxZ = Math.max(Math.abs(worldBox.min.z), Math.abs(worldBox.max.z));
     const computedBounds = { x: maxX + 2, z: maxZ + 2 };
 
-    // Spawn near waypointRoom if it exists
-    const roomWp = wps["waypointRoom"];
-    const spawn: [number, number, number] = roomWp
-      ? [roomWp.x, roomWp.y, roomWp.z + 1.0]
+    // Spawn near returnWaypoint if it exists, otherwise waypointRoom
+    const targetWpName = returnWaypoint || "waypointRoom";
+    const targetWp = wps[targetWpName];
+    const spawn: [number, number, number] = targetWp
+      ? [targetWp.x, targetWp.y, targetWp.z + 1.0]
       : [0, 0, 6];
 
     return {
@@ -140,7 +143,7 @@ export const CityMapScene = () => {
       waypointPos: wps,
       spawnPos: spawn,
     };
-  }, [townSrc]);
+  }, [townSrc, returnWaypoint]);
 
   const allBadgesDone = BADGE_IDS.every((id) => !!defeatedNPCs[id]);
 
@@ -187,25 +190,37 @@ export const CityMapScene = () => {
         nodeName: "waypointAbout",
         label: "Enter About House",
         radius: 2.4,
-        onTrigger: () => enterBuilding("about"),
+        onTrigger: () => {
+          setReturnWaypoint("waypointAbout");
+          enterBuilding("about");
+        },
       },
       {
         nodeName: "waypointProjects",
         label: "Enter Projects Lab",
         radius: 2.4,
-        onTrigger: () => enterBuilding("projects"),
+        onTrigger: () => {
+          setReturnWaypoint("waypointProjects");
+          enterBuilding("projects");
+        },
       },
       {
         nodeName: "waypointSkill",
         label: "Enter Skills House",
         radius: 2.4,
-        onTrigger: () => enterBuilding("skill"),
+        onTrigger: () => {
+          setReturnWaypoint("waypointSkill");
+          enterBuilding("skill");
+        },
       },
       {
         nodeName: "waypointCv",
         label: "Enter CV Tower",
         radius: 2.4,
-        onTrigger: () => enterBuilding("cv"),
+        onTrigger: () => {
+          setReturnWaypoint("waypointCv");
+          enterBuilding("cv");
+        },
       },
 
       // --- Return to room ---
@@ -213,7 +228,10 @@ export const CityMapScene = () => {
         nodeName: "waypointRoom",
         label: "Go Back Home",
         radius: 2.4,
-        onTrigger: () => setScene("home"),
+        onTrigger: () => {
+          setReturnWaypoint("waypointStairs");
+          setScene("home");
+        },
       },
 
       // --- City exit (gated by badges) ---
@@ -237,7 +255,7 @@ export const CityMapScene = () => {
         },
       },
     ],
-    [enterBuilding, setScene, setDialog, allBadgesDone]
+    [enterBuilding, setScene, setDialog, allBadgesDone, setReturnWaypoint]
   );
 
   // ✅ Nearest interaction logic (same as HomeRoomScene)

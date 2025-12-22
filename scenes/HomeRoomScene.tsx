@@ -16,9 +16,11 @@ type InteractionDef = {
 
 export const HomeRoomScene = () => {
   const setScene = useGameStore((s) => s.setScene);
+  const setReturnWaypoint = useGameStore((s) => s.setReturnWaypoint);
   const setInteraction = useGameStore((s) => s.setInteraction);
   const dialog = useGameStore((s) => s.dialog);
   const setDialog = useGameStore((s) => s.setDialog);
+  const returnWaypoint = useGameStore((s) => s.returnWaypoint);
 
   const playerRef = useRef<THREE.Group>(null);
   const activeActionRef = useRef<null | (() => void)>(null);
@@ -66,10 +68,21 @@ export const HomeRoomScene = () => {
     return { room: cloned, colliders: rects };
   }, [roomSrc]);
 
-  const spawnPos = React.useMemo(
-    () => [0, 0, 2] as [number, number, number],
-    []
-  );
+  const spawnPos = useMemo(() => {
+    // If we're re-entering from the city, spawn at the stairs
+    if (returnWaypoint === "waypointStairs") {
+      const obj = room.getObjectByName("waypointStairs");
+      if (obj) {
+        const v = new THREE.Vector3();
+        obj.getWorldPosition(v);
+        // Slightly offset so we aren't immediately triggering the interaction again
+        // Force y to 0 to ensure player is on the floor
+        return [v.x, 0, v.z + 1.2] as [number, number, number];
+      }
+    }
+    // Default spawn (the first time)
+    return [0, 0, 2] as [number, number, number];
+  }, [room, returnWaypoint]);
   const playerBounds = React.useMemo(() => ({ x: 5.3, z: 5.3 }), []);
 
   const getWaypointWorldPos = (nodeName: string) => {
@@ -130,13 +143,22 @@ export const HomeRoomScene = () => {
         nodeName: "waypointStairs",
         label: "Go Downstairs",
         radius: 2.2,
-        onTrigger: () => setScene("city"),
+        onTrigger: () => {
+          setReturnWaypoint("waypointRoom");
+          setScene("city");
+        },
       },
     ],
-    [setScene, setDialog]
+    [setScene, setDialog, setReturnWaypoint]
   );
 
-  useFrame(() => {
+  useFrame((state) => {
+    // 1. Smoothly transition camera to fixed room view
+    const targetPos = new THREE.Vector3(0, 5, 10);
+    state.camera.position.lerp(targetPos, 0.1);
+    state.camera.lookAt(0, 0, 0);
+
+    // 2. Interaction logic
     const playerPos = playerRef.current?.position;
     if (!playerPos) return;
 
@@ -199,6 +221,7 @@ export const HomeRoomScene = () => {
         position={spawnPos}
         bounds={playerBounds}
         speed={4}
+        cameraFollow={false}
         radius={0.35}
         colliders={colliders}
         onInteract={() => activeActionRef.current?.()}
