@@ -38,9 +38,29 @@ export const UIOverlay = () => {
 
         <div className="text-sm leading-relaxed">{dialog.body}</div>
 
-        <div className="opacity-50 text-[10px] mt-4 uppercase tracking-widest">
-          (click or space to close)
-        </div>
+        {dialog.onConfirm ? (
+          <div className="flex justify-center gap-4 mt-6">
+            <button
+              onClick={() => {
+                dialog.onConfirm?.();
+                setDialog({ open: false });
+              }}
+              className="bg-green-500 hover:bg-green-600 text-white px-8 py-2 rounded-lg border-2 border-white uppercase tracking-wider transition-transform hover:scale-105 pointer-events-auto"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => setDialog({ open: false })}
+              className="bg-red-500 hover:bg-red-600 text-white px-8 py-2 rounded-lg border-2 border-white uppercase tracking-wider transition-transform hover:scale-105 pointer-events-auto"
+            >
+              No
+            </button>
+          </div>
+        ) : (
+          <div className="opacity-50 text-[10px] mt-4 uppercase tracking-widest">
+            (click or space to close)
+          </div>
+        )}
       </div>
     </div>
   );
@@ -106,7 +126,13 @@ export const UIOverlay = () => {
         </div>
       </>
     );
-  } else if (scene === "home") {
+  } else if (
+    scene === "home" ||
+    scene === "about" ||
+    scene === "projects" ||
+    scene === "cv" ||
+    scene === "skill"
+  ) {
     sceneContent = (
       <>
         {interactionPrompt}

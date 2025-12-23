@@ -30,12 +30,13 @@ interface GameState {
     open: boolean;
     title?: string;
     body?: string;
+    onConfirm?: () => void;
   };
   // Return positioning
   returnWaypoint?: string;
   setReturnWaypoint: (wp: string | undefined) => void;
 
-  setDialog: (dialog: { open: boolean; title?: string; body?: string }) => void;
+  setDialog: (dialog: { open: boolean; title?: string; body?: string; onConfirm?: () => void }) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({

@@ -24,6 +24,7 @@ export const HomeRoomScene = () => {
 
   const playerRef = useRef<THREE.Group>(null);
   const activeActionRef = useRef<null | (() => void)>(null);
+  const prevInteractionRef = useRef<string | null>(null);
 
   const { scene: roomSrc } = useGLTF("/models/Room.glb");
 
@@ -163,7 +164,10 @@ export const HomeRoomScene = () => {
     if (!playerPos) return;
 
     if (dialog.open) {
-      setInteraction(null, null);
+      if (prevInteractionRef.current !== null) {
+        setInteraction(null, null);
+        prevInteractionRef.current = null;
+      }
       activeActionRef.current = null;
       return;
     }
@@ -181,10 +185,16 @@ export const HomeRoomScene = () => {
     }
 
     if (best) {
-      setInteraction(best.def.label, best.def.onTrigger);
+      if (prevInteractionRef.current !== best.def.label) {
+        setInteraction(best.def.label, best.def.onTrigger);
+        prevInteractionRef.current = best.def.label;
+      }
       activeActionRef.current = best.def.onTrigger;
     } else {
-      setInteraction(null, null);
+      if (prevInteractionRef.current !== null) {
+        setInteraction(null, null);
+        prevInteractionRef.current = null;
+      }
       activeActionRef.current = null;
     }
   });

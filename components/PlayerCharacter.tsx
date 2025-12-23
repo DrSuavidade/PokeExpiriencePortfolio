@@ -17,6 +17,8 @@ type Props = {
   onInteract?: () => void;
   colliders?: Rect[];
   radius?: number;
+  forceWalk?: boolean;
+  rotationY?: number;
 };
 
 export const PlayerCharacter = forwardRef<THREE.Group, Props>(
@@ -29,6 +31,8 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       onInteract,
       colliders = [],
       radius = 0.35,
+      forceWalk = false,
+      rotationY,
     },
     ref
   ) => {
@@ -57,12 +61,17 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
     const [isInteracting, setIsInteracting] = useState(false);
     const currentAction = useRef<ActionName>("Idle");
 
-    // Set initial position once
+    // Optimization: Reusable vectors to avoid GC spikes
+    const _targetPos = useRef(new THREE.Vector3());
+    const _camLookAt = useRef(new THREE.Vector3());
+
+    // Set initial position once on mount
     useEffect(() => {
       if (!controllerRef.current) return;
       controllerRef.current.position.set(position[0], position[1], position[2]);
       controllerRef.current.rotation.set(0, 0, 0);
-    }, [position]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Dialog open -> stop input
     useEffect(() => {
@@ -143,7 +152,7 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       return () => mixer.removeEventListener("finished", onFinished);
     }, [mixer, actions]);
 
-    useFrame((state, dt) => {
+    useFrame((state, delta) => {
       const ctrl = controllerRef.current;
       if (!ctrl) return;
 
@@ -159,7 +168,7 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
         return;
       }
 
-      const moveSpeed = speed * dt;
+      const moveSpeed = speed * delta;
 
       let dx = 0;
       let dz = 0;
@@ -169,7 +178,7 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       if (keys.current["ArrowLeft"] || keys.current["KeyA"]) dx -= moveSpeed;
       if (keys.current["ArrowRight"] || keys.current["KeyD"]) dx += moveSpeed;
 
-      const moving = dx !== 0 || dz !== 0;
+      const moving = dx !== 0 || dz !== 0 || forceWalk;
 
       if (moving) {
         if (currentAction.current !== "Walk") play("Walk", 0.12);
@@ -192,21 +201,26 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       ctrl.position.x = nextX;
       ctrl.position.z = nextZ;
 
-      // lock Y so animation can’t move the controller
-      ctrl.position.y = position[1];
-
-      if (moving) ctrl.rotation.y = Math.atan2(-dx, -dz);
+      if (moving) {
+        if (rotationY !== undefined) {
+          ctrl.rotation.y = rotationY;
+        } else if (dx !== 0 || dz !== 0) {
+          ctrl.rotation.y = Math.atan2(-dx, -dz);
+        }
+      }
 
       // ✅ frame-rate independent smoothing for camera follow
       if (cameraFollow) {
-        const followAlpha = 1 - Math.pow(0.001, dt); // smooth regardless of FPS
-        const target = new THREE.Vector3(
+        const followAlpha = 1 - Math.pow(0.001, delta); // smooth regardless of FPS
+        _targetPos.current.set(ctrl.position.x, 8, ctrl.position.z + 10);
+        _camLookAt.current.set(
           ctrl.position.x,
-          8,
-          ctrl.position.z + 10
+          ctrl.position.y,
+          ctrl.position.z
         );
-        state.camera.position.lerp(target, followAlpha);
-        state.camera.lookAt(ctrl.position.x, ctrl.position.y, ctrl.position.z);
+
+        state.camera.position.lerp(_targetPos.current, followAlpha);
+        state.camera.lookAt(_camLookAt.current);
       }
     });
 

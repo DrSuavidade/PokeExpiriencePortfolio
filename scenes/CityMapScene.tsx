@@ -45,13 +45,11 @@ export const CityMapScene = () => {
     colliders,
     bounds,
     waypointPos,
-    spawnPos,
   }: {
     town: THREE.Object3D;
     colliders: Rect[];
     bounds: { x: number; z: number };
     waypointPos: Record<string, THREE.Vector3>;
-    spawnPos: [number, number, number];
   } = useMemo(() => {
     const cloned = townSrc.clone(true);
 
@@ -129,21 +127,19 @@ export const CityMapScene = () => {
     const maxZ = Math.max(Math.abs(worldBox.min.z), Math.abs(worldBox.max.z));
     const computedBounds = { x: maxX + 2, z: maxZ + 2 };
 
-    // Spawn near returnWaypoint if it exists, otherwise waypointRoom
-    const targetWpName = returnWaypoint || "waypointRoom";
-    const targetWp = wps[targetWpName];
-    const spawn: [number, number, number] = targetWp
-      ? [targetWp.x, targetWp.y, targetWp.z + 1.0]
-      : [0, 0, 6];
-
     return {
       town: cloned,
       colliders: rects,
       bounds: computedBounds,
       waypointPos: wps,
-      spawnPos: spawn,
     };
-  }, [townSrc, returnWaypoint]);
+  }, [townSrc]);
+
+  const spawnPos: [number, number, number] = useMemo(() => {
+    const targetWpName = returnWaypoint || "waypointRoom";
+    const targetWp = waypointPos[targetWpName];
+    return targetWp ? [targetWp.x, targetWp.y, targetWp.z + 1.0] : [0, 0, 6];
+  }, [waypointPos, returnWaypoint]);
 
   const allBadgesDone = BADGE_IDS.every((id) => !!defeatedNPCs[id]);
 
@@ -258,6 +254,8 @@ export const CityMapScene = () => {
     [enterBuilding, setScene, setDialog, allBadgesDone, setReturnWaypoint]
   );
 
+  const prevInteractionRef = useRef<string | null>(null);
+
   // ✅ Nearest interaction logic (same as HomeRoomScene)
   useFrame(() => {
     const playerPos = playerRef.current?.position;
@@ -265,7 +263,10 @@ export const CityMapScene = () => {
 
     // If dialog is open, don't offer interactions
     if (dialog.open) {
-      setInteraction(null, null);
+      if (prevInteractionRef.current !== null) {
+        setInteraction(null, null);
+        prevInteractionRef.current = null;
+      }
       activeActionRef.current = null;
       return;
     }
@@ -283,10 +284,16 @@ export const CityMapScene = () => {
     }
 
     if (best) {
-      setInteraction(best.def.label, best.def.onTrigger);
+      if (prevInteractionRef.current !== best.def.label) {
+        setInteraction(best.def.label, best.def.onTrigger);
+        prevInteractionRef.current = best.def.label;
+      }
       activeActionRef.current = best.def.onTrigger;
     } else {
-      setInteraction(null, null);
+      if (prevInteractionRef.current !== null) {
+        setInteraction(null, null);
+        prevInteractionRef.current = null;
+      }
       activeActionRef.current = null;
     }
   });
