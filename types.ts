@@ -4,7 +4,11 @@ export type SceneId =
   | "city"
   | "building"
   | "battle"
-  | "ending";
+  | "ending"
+  | "about"
+  | "projects"
+  | "cv"
+  | "skill";
 
 export type StarterId = "slothie" | "tigguin" | "elcoon";
 

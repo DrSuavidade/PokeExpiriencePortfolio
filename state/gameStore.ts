@@ -77,7 +77,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   enterBuilding: (buildingId) => {
     set({ isLoading: true });
     setTimeout(() => {
-      set({ activeBuildingId: buildingId, scene: "building", interactionText: null, interactAction: null });
+      set({
+        activeBuildingId: buildingId,
+        scene: buildingId as SceneId,
+        interactionText: null,
+        interactAction: null
+      });
       setTimeout(() => set({ isLoading: false }), 800);
     }, 600);
   },
