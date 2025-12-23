@@ -41,6 +41,7 @@ export const AboutScene = () => {
       interactions={interactions}
       fixedCamera={true}
       fixedCameraPos={[0, 7, 10]}
+      initialRotationY={Math.PI / 2}
     />
   );
 };

@@ -28,6 +28,7 @@ interface BuildingBaseSceneProps {
   fixedCameraPos?: [number, number, number];
   floorHeight?: number;
   onFrame?: (model: THREE.Group, delta: number, elapsed: number) => void;
+  initialRotationY?: number;
 }
 
 export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
@@ -42,6 +43,7 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
   fixedCameraPos = [0, 5, 10],
   floorHeight = 3.2,
   onFrame,
+  initialRotationY = 0,
 }) => {
   const setScene = useGameStore((s) => s.setScene);
   const setReturnWaypoint = useGameStore((s) => s.setReturnWaypoint);
@@ -406,7 +408,7 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
         colliders={colliders}
         onInteract={() => activeActionRef.current?.()}
         forceWalk={!!transition}
-        rotationY={transition?.rotation}
+        rotationY={transition ? transition.rotation : initialRotationY}
       />
     </>
   );

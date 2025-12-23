@@ -36,7 +36,7 @@ export const SkillScene = () => {
       scale={0.5}
       interactions={interactions}
       fixedCamera={true}
-      fixedCameraPos={[0, 7, 13]}
+      fixedCameraPos={[0, 6, 11]}
     />
   );
 };

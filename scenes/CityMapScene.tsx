@@ -154,8 +154,8 @@ export const CityMapScene = () => {
         onTrigger: () =>
           setDialog({
             open: true,
-            title: "Info",
-            body: "About House — learn who I am and how I work.",
+            title: "About House",
+            body: "learn who I am and how I work.",
           }),
       },
       {
@@ -165,8 +165,8 @@ export const CityMapScene = () => {
         onTrigger: () =>
           setDialog({
             open: true,
-            title: "Info",
-            body: "Projects Lab — explore my best work and how I build games.",
+            title: "Projects Lab",
+            body: "explore my best work and how I build games.",
           }),
       },
       {
@@ -176,8 +176,8 @@ export const CityMapScene = () => {
         onTrigger: () =>
           setDialog({
             open: true,
-            title: "Info",
-            body: "Skills House — what tools I use and what I’m strongest at.",
+            title: "<- CV Trial - Game Test->",
+            body: "Find my cv on the left and test some games on the right.",
           }),
       },
 

@@ -235,6 +235,7 @@ export const HomeRoomScene = () => {
         radius={0.35}
         colliders={colliders}
         onInteract={() => activeActionRef.current?.()}
+        rotationY={Math.PI / 2}
       />
     </>
   );
