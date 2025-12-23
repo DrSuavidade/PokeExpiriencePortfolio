@@ -5,6 +5,7 @@ import { useGameStore } from "../state/gameStore";
 
 export const SkillScene = () => {
   const setDialog = useGameStore((s) => s.setDialog);
+  const setConsoleOpen = useGameStore((s) => s.setConsoleOpen);
 
   const interactions = useMemo(
     () => [
@@ -16,22 +17,14 @@ export const SkillScene = () => {
           setDialog({
             open: true,
             title: "The Fridge",
-            body: "It's full of energy drinks and leftover pizza. The true fuel of a developer.",
+            body: "Nothing but energy drinks, smoked salmon and cottage cheese. The true fuel of a developer.",
           }),
       },
       {
         nodeName: "waypointPlay",
         label: "Play Game",
         radius: 2.0,
-        onTrigger: () =>
-          setDialog({
-            open: true,
-            title: "Start Game?",
-            body: "Do you want to play a small demo? This will open in a new tab.",
-            onConfirm: () => {
-              window.open("https://example.com/demo", "_blank");
-            },
-          }),
+        onTrigger: () => setConsoleOpen(true),
       },
     ],
     [setDialog]
@@ -43,7 +36,7 @@ export const SkillScene = () => {
       scale={0.5}
       interactions={interactions}
       fixedCamera={true}
-      fixedCameraPos={[0, 8, 15]}
+      fixedCameraPos={[0, 7, 13]}
     />
   );
 };

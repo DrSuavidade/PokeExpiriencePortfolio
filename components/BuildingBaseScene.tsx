@@ -27,6 +27,7 @@ interface BuildingBaseSceneProps {
   fixedCamera?: boolean;
   fixedCameraPos?: [number, number, number];
   floorHeight?: number;
+  onFrame?: (model: THREE.Group, delta: number, elapsed: number) => void;
 }
 
 export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
@@ -40,6 +41,7 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
   fixedCamera = false,
   fixedCameraPos = [0, 5, 10],
   floorHeight = 3.2,
+  onFrame,
 }) => {
   const setScene = useGameStore((s) => s.setScene);
   const setReturnWaypoint = useGameStore((s) => s.setReturnWaypoint);
@@ -380,6 +382,10 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
         prevInteractionRef.current = null;
       }
       activeActionRef.current = null;
+    }
+
+    if (onFrame && model) {
+      onFrame(model, delta, state.clock.getElapsedTime());
     }
   });
 

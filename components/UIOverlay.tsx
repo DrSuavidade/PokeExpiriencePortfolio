@@ -3,6 +3,7 @@ import { useGameStore } from "../state/gameStore";
 import { starters } from "../data/monsters";
 import { buildings } from "../data/buildings";
 import { Menu } from "./Menu";
+import { GameConsole } from "./GameConsole";
 
 export const UIOverlay = () => {
   const {
@@ -17,6 +18,8 @@ export const UIOverlay = () => {
     interactAction,
     dialog,
     setDialog,
+    consoleOpen,
+    setConsoleOpen,
   } = useGameStore();
   const [battleLog, setBattleLog] = useState<string[]>([]);
   const [battleTurn, setBattleTurn] = useState(0);
@@ -25,7 +28,7 @@ export const UIOverlay = () => {
   // The user had "(click to close)".
 
   const dialogueBox = dialog.open && (
-    <div className="fixed bottom-10 left-0 right-0 z-[100] flex flex-col items-center pointer-events-none">
+    <div className="fixed bottom-10 left-0 right-0 z-[300] flex flex-col items-center pointer-events-none">
       <div
         onClick={() => setDialog({ open: false })}
         className="bg-black/70 backdrop-blur text-white p-6 rounded-xl border-4 border-white pixel-font text-center max-w-2xl w-full mx-4 pointer-events-auto cursor-pointer"
@@ -74,6 +77,12 @@ export const UIOverlay = () => {
         (e.key === "e" || e.key === "E" || e.code === "Space")
       ) {
         setDialog({ open: false });
+        return;
+      }
+
+      // Close console with Escape
+      if (consoleOpen && e.key === "Escape") {
+        setConsoleOpen(false);
         return;
       }
 
@@ -329,6 +338,7 @@ export const UIOverlay = () => {
     <>
       {sceneContent}
       {dialogueBox}
+      {consoleOpen && <GameConsole />}
     </>
   );
 };

@@ -365,6 +365,7 @@ export const CityMapScene = () => {
         radius={0.35}
         colliders={colliders}
         onInteract={() => activeActionRef.current?.()}
+        rotationY={Math.PI}
       />
     </>
   );

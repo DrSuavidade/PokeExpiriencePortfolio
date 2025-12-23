@@ -28,7 +28,7 @@ export const ProjectsScene = () => {
           setDialog({
             open: true,
             title: "Technical Stack",
-            body: "I use React, Three.js, and TypeScript to build immersive experiences.",
+            body: "To build this experience I used React, Three.js, and TypeScript.",
           }),
       },
       {
@@ -38,8 +38,8 @@ export const ProjectsScene = () => {
         onTrigger: () =>
           setDialog({
             open: true,
-            title: "Future Plans",
-            body: "Coming soon: More interactive components and VR support.",
+            title: "Contributions",
+            body: "Helped with an among us mod with more than 5M weekly views.",
           }),
       },
 
@@ -52,7 +52,7 @@ export const ProjectsScene = () => {
           setDialog({
             open: true,
             title: "3D Projects",
-            body: "These models represent my work in procedural generation and animation.",
+            body: "To see more, look at the old portfolio upstairs.",
           }),
       },
       {
@@ -89,15 +89,16 @@ export const ProjectsScene = () => {
             body: `Do you want to see the ${id} project? This will open a new window.`,
             onConfirm: () => {
               const links: Record<string, string> = {
-                Git: "https://github.com",
-                Portfolio: "https://portfolio.com",
-                Play: "https://play.com",
-                Video1: "https://youtube.com",
-                Video2: "https://vimeo.com",
-                Viseu: "https://viseu.pt",
-                Art: "https://artstation.com",
-                Ar: "https://ar-experience.com",
-                Bundlr: "https://bundlr.network",
+                Git: "https://github.com/DrSuavidade",
+                Portfolio: "https://pedrodcostaportfolio.onrender.com/",
+                Play: "https://drive.google.com/file/d/1wTTMSXjCj_lcpETv-mxrPCS_3g066D6I/view",
+                Video1:
+                  "https://drive.google.com/file/d/1kbA0kgXoS3ZrUGcD-LjP7TUWapffaZGA/view",
+                Video2: "https://www.youtube.com/watch?v=4fCb-7U_IJI",
+                Viseu: "https://avscouts.onrender.com/login",
+                Art: "https://drive.google.com/file/d/1KWQkvEbcv9feTh1SE-AkszvRRSxJ55Me/view",
+                Ar: "https://github.com/DrSuavidade/EstagioIPV-V4Y/blob/main/EntregaFinal/Relat%C3%B3rioEstagio_pv26240.pdf",
+                Bundlr: "https://bundlr.pt/",
               };
               window.open(links[id] || "#", "_blank");
             },

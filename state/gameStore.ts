@@ -32,9 +32,10 @@ interface GameState {
     body?: string;
     onConfirm?: () => void;
   };
-  // Return positioning
   returnWaypoint?: string;
   setReturnWaypoint: (wp: string | undefined) => void;
+  consoleOpen: boolean;
+  setConsoleOpen: (open: boolean) => void;
 
   setDialog: (dialog: { open: boolean; title?: string; body?: string; onConfirm?: () => void }) => void;
 }
@@ -58,6 +59,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   returnWaypoint: undefined,
   setReturnWaypoint: (wp) => set({ returnWaypoint: wp }),
+  consoleOpen: false,
+  setConsoleOpen: (open) => set({ consoleOpen: open }),
 
   setScene: (scene) => {
     set({ isLoading: true });

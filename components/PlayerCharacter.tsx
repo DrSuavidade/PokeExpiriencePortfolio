@@ -19,6 +19,7 @@ type Props = {
   radius?: number;
   forceWalk?: boolean;
   rotationY?: number;
+  initialRotationY?: number;
 };
 
 export const PlayerCharacter = forwardRef<THREE.Group, Props>(
@@ -33,6 +34,7 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       radius = 0.35,
       forceWalk = false,
       rotationY,
+      initialRotationY,
     },
     ref
   ) => {
@@ -69,7 +71,14 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
     useEffect(() => {
       if (!controllerRef.current) return;
       controllerRef.current.position.set(position[0], position[1], position[2]);
-      controllerRef.current.rotation.set(0, 0, 0);
+
+      const startRot =
+        rotationY !== undefined
+          ? rotationY
+          : initialRotationY !== undefined
+          ? initialRotationY
+          : 0;
+      controllerRef.current.rotation.set(0, startRot, 0);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -202,7 +211,7 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       ctrl.position.z = nextZ;
 
       if (moving) {
-        if (rotationY !== undefined) {
+        if (forceWalk && rotationY !== undefined) {
           ctrl.rotation.y = rotationY;
         } else if (dx !== 0 || dz !== 0) {
           ctrl.rotation.y = Math.atan2(-dx, -dz);
