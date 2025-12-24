@@ -1,6 +1,6 @@
 import React from "react";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import "./LoadingOverlay.css";
+import "../index.css";
 
 // Option A (public/): use this
 const LOTTIE_SRC = "/lottie/loading.lottie";
