@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { BuildingBaseScene } from "../components/BuildingBaseScene";
-import { useGLTF } from "@react-three/drei";
+import { useGLTF, ContactShadows } from "@react-three/drei";
 import { useGameStore } from "../state/gameStore";
 
 export const AboutScene = () => {
@@ -70,7 +70,23 @@ export const AboutScene = () => {
       fixedCameraPos={[0, 7, 10]}
       initialRotationY={Math.PI / 2}
       cameraMode={cameraMode}
-    />
+    >
+      {/* Shed Ambiance: Warm point light and soft shadows */}
+      <pointLight
+        position={[-2, 3, 1]}
+        intensity={2.5}
+        color="#ffcc88"
+        distance={8}
+        decay={2}
+      />
+      <ContactShadows
+        position={[0, -0.01, 0]}
+        scale={20}
+        blur={2}
+        far={4.5}
+        opacity={0.6}
+      />
+    </BuildingBaseScene>
   );
 };
 

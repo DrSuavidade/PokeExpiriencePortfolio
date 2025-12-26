@@ -46,6 +46,9 @@ interface BuildingBaseSceneProps {
   onFrame?: (model: THREE.Group, delta: number, elapsed: number) => void;
   initialRotationY?: number;
   cameraMode?: "normal" | "desk";
+  ambientIntensity?: number;
+  directionalIntensity?: number;
+  children?: React.ReactNode;
 }
 
 export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
@@ -62,6 +65,9 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
   onFrame,
   initialRotationY = 0,
   cameraMode = "normal",
+  ambientIntensity = 0.25,
+  directionalIntensity = 0.4,
+  children,
 }) => {
   const setScene = useGameStore((s) => s.setScene);
   const setReturnWaypoint = useGameStore((s) => s.setReturnWaypoint);
@@ -651,10 +657,16 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
   return (
     <>
       <color attach="background" args={["black"]} />
-      <ambientLight intensity={0.8} />
-      <directionalLight position={[5, 10, 5]} intensity={0.5} castShadow />
+      <ambientLight intensity={ambientIntensity} />
+      <directionalLight
+        position={[5, 10, 5]}
+        intensity={directionalIntensity}
+        castShadow
+      />
       <Environment preset="city" />
       <primitive object={model} />
+      {/* Scene specific additions */}
+      {children}
       {/* Interactive Desk Items */}
       {Object.entries(deskItems).map(([name, obj]) => (
         <primitive

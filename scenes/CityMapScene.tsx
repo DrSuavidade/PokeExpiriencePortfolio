@@ -1,7 +1,7 @@
 /// <reference types="@react-three/fiber" />
 import React, { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Environment, useGLTF } from "@react-three/drei";
+import { Environment, useGLTF, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 
 import { useGameStore } from "../state/gameStore";
@@ -70,7 +70,10 @@ export const CityMapScene = () => {
     // Shadows defaults + hide colliders/waypoints (so they don't render)
     cloned.traverse((o: any) => {
       if (o?.isMesh) {
-        o.castShadow = true;
+        const lowerName = (o.name || "").toLowerCase();
+        const isFloor =
+          lowerName.includes("floor") || lowerName.includes("ground");
+        o.castShadow = !isFloor;
         o.receiveShadow = true;
       }
 
@@ -321,28 +324,36 @@ export const CityMapScene = () => {
 
   return (
     <>
-      <ambientLight intensity={0.75} />
+      <ambientLight intensity={0.55} />
 
       <directionalLight
-        position={[-8, 12, -6]}
-        intensity={0.65}
+        position={[20, 30, 20]}
+        intensity={2.5}
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-bias={-0.0005}
-        shadow-normalBias={0.03}
+        shadow-mapSize={[8048, 8048]}
+        shadow-bias={-0.0001}
+        shadow-normalBias={0.02}
         shadow-camera-near={1}
-        shadow-camera-far={80}
-        shadow-camera-left={-30}
-        shadow-camera-right={30}
-        shadow-camera-top={30}
-        shadow-camera-bottom={-30}
+        shadow-camera-far={150}
+        shadow-camera-left={-50}
+        shadow-camera-right={50}
+        shadow-camera-top={50}
+        shadow-camera-bottom={-50}
       />
 
       <Environment preset="city" />
 
-      {/* Town model (COLL_ + waypoints are hidden inside) */}
+      {/* Town model */}
       <primitive object={town} />
+
+      {/* Soft grounding shadows */}
+      <ContactShadows
+        position={[0, 0.01, 0]}
+        opacity={0.7}
+        scale={60}
+        blur={2.5}
+        far={10}
+      />
 
       {/* Badge completion markers */}
       {badgeMarkers.map(({ id, pos }) => {

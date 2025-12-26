@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback, useRef } from "react";
 import { BuildingBaseScene } from "../components/BuildingBaseScene";
-import { useGLTF } from "@react-three/drei";
+import { useGLTF, ContactShadows } from "@react-three/drei";
 import { useGameStore } from "../state/gameStore";
 import * as THREE from "three";
 
@@ -90,7 +90,25 @@ export const CvScene = () => {
       teleports={teleports}
       floorHeight={2.9}
       onFrame={handleFrame}
-    />
+      ambientIntensity={0.1}
+      directionalIntensity={0.2}
+    >
+      {/* Mystery Ambiance: Cool-toned focal point and grounding shadows */}
+      <pointLight
+        position={[2, 4, -2]}
+        intensity={3}
+        color="#88ccff"
+        distance={12}
+        decay={2}
+      />
+      <ContactShadows
+        position={[0, -0.01, 0]}
+        scale={25}
+        blur={2.5}
+        far={5}
+        opacity={0.7}
+      />
+    </BuildingBaseScene>
   );
 };
 
