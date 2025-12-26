@@ -327,7 +327,7 @@ export const CityMapScene = () => {
       <ambientLight intensity={0.55} />
 
       <directionalLight
-        position={[20, 30, 20]}
+        position={[20, 20, 20]}
         intensity={2.5}
         castShadow
         shadow-mapSize={[8048, 8048]}
