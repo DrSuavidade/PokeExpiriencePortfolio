@@ -1,10 +1,27 @@
 import React, { useMemo, useRef, useLayoutEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Environment, useGLTF } from "@react-three/drei";
+import { Environment, useGLTF, Outlines } from "@react-three/drei";
 import * as THREE from "three";
 import { useGameStore } from "../state/gameStore";
 import { PlayerCharacter } from "../components/PlayerCharacter";
 import type { Rect } from "../utils/collision2d";
+
+const DESK_ITEM_INFO: Record<string, { title: string; body: string }> = {
+  frame: { title: "Image of the Creator", body: "We don't know who he is." },
+  globe: {
+    title: "Born in Portugal",
+    body: "Portuguese but ready for worldwide opportunities.",
+  },
+  jukebox: {
+    title: "Mini Jukebox",
+    body: "Some MF DOOM and Takanaka gives a chill vibe.",
+  },
+  mail: { title: "Inbox", body: "You've got mail!" },
+  notebook: {
+    title: "About Me",
+    body: "I'm a man of ideas and a lot of work. Always learning and growing. Really familiar with using AI but not to depend on it",
+  },
+};
 
 type InteractionDef = {
   nodeName: string;
@@ -78,77 +95,110 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
   const transitionProgress = useRef(0);
   const SEGMENT_DURATION = 0.6; // Duration per segment
 
+  const [hoveredDeskItem, setHoveredDeskItem] = useState<string | null>(null);
+
   const { scene: modelSrc } = useGLTF(modelPath);
 
-  const { model, colliders, waypoints, cameraTarget } = useMemo(() => {
-    const cloned = modelSrc.clone(true);
-    cloned.scale.setScalar(scale);
-    cloned.updateMatrixWorld(true);
+  const { model, colliders, waypoints, cameraTarget, deskItems } =
+    useMemo(() => {
+      const cloned = modelSrc.clone(true);
+      cloned.scale.setScalar(scale);
+      cloned.updateMatrixWorld(true);
 
-    const rects: Rect[] = [];
-    const tmpBox = new THREE.Box3();
-    const wps: Record<string, THREE.Vector3> = {};
+      const rects: Rect[] = [];
+      const tmpBox = new THREE.Box3();
+      const wps: Record<string, THREE.Vector3> = {};
 
-    cloned.traverse((o: any) => {
-      const name = o.name || "";
-      const lowerName = name.toLowerCase();
+      const deskItems: Record<string, THREE.Object3D> = {};
+      const interactableNames = [
+        "frame",
+        "globe",
+        "jukebox",
+        "mail",
+        "notebook",
+      ];
 
-      if (o?.isMesh) {
-        // Selective shadows for performance (critical for big scenes like Gallery)
-        const isFloor =
-          lowerName.includes("floor") || lowerName.includes("ground");
-        o.castShadow = false; // Buildings usually don't need to cast shadows on themselves
-        o.receiveShadow = isFloor;
+      cloned.traverse((o: any) => {
+        const name = o.name || "";
+        const lowerName = name.toLowerCase();
 
-        // Fix for rendering issues (transparency, depth sorting)
-        if (o.material) {
-          const mats = Array.isArray(o.material) ? o.material : [o.material];
-          mats.forEach((m: any) => {
-            m.transparent = false;
-            m.depthWrite = true;
-            m.depthTest = true;
-            m.alphaTest = 0;
-            // Removed m.needsUpdate = true to prevent redundant re-compilations
+        // Check for desk interactables (exact match)
+        const matchedName = interactableNames.find((n) => lowerName === n);
+
+        if (matchedName) {
+          // Clone for separate rendering/interaction
+          const clonedItem = o.clone();
+
+          const worldPos = new THREE.Vector3();
+          const worldQuat = new THREE.Quaternion();
+          const worldScale = new THREE.Vector3();
+          o.updateMatrixWorld(true);
+          o.getWorldPosition(worldPos);
+          o.getWorldQuaternion(worldQuat);
+          o.getWorldScale(worldScale);
+
+          clonedItem.position.copy(worldPos);
+          clonedItem.quaternion.copy(worldQuat);
+          clonedItem.scale.copy(worldScale);
+
+          deskItems[matchedName] = clonedItem;
+          o.visible = false; // Hide original
+        }
+
+        if (o?.isMesh) {
+          // ... existing code ...
+          const isFloor =
+            lowerName.includes("floor") || lowerName.includes("ground");
+          o.castShadow = false;
+          o.receiveShadow = isFloor;
+          if (o.material) {
+            const mats = Array.isArray(o.material) ? o.material : [o.material];
+            mats.forEach((m: any) => {
+              m.transparent = false;
+              m.depthWrite = true;
+              m.depthTest = true;
+              m.alphaTest = 0;
+            });
+          }
+        }
+
+        if (name.startsWith("COLL_")) {
+          // ... existing collision logic ...
+          o.visible = false;
+          o.castShadow = false;
+          o.receiveShadow = false;
+          tmpBox.setFromObject(o);
+          rects.push({
+            minX: tmpBox.min.x,
+            maxX: tmpBox.max.x,
+            minZ: tmpBox.min.z,
+            maxZ: tmpBox.max.z,
           });
         }
-      }
 
-      if (name.startsWith("COLL_")) {
-        // ... existing collision logic ...
-        o.visible = false;
-        o.castShadow = false;
-        o.receiveShadow = false;
-        tmpBox.setFromObject(o);
-        rects.push({
-          minX: tmpBox.min.x,
-          maxX: tmpBox.max.x,
-          minZ: tmpBox.min.z,
-          maxZ: tmpBox.max.z,
-        });
-      }
+        if (name.startsWith("waypoint")) {
+          const v = new THREE.Vector3();
+          o.getWorldPosition(v);
+          wps[name] = v;
+          if (o.isMesh) o.visible = false;
+        }
+      });
 
-      if (name.startsWith("waypoint")) {
-        const v = new THREE.Vector3();
-        o.getWorldPosition(v);
-        wps[name] = v;
-        if (o.isMesh) o.visible = false;
-      }
-    });
+      // Manual camera target for desk view (AboutScene)
+      // Adjust these values to fine-tune the camera position and FOV
+      const camTarget = {
+        position: new THREE.Vector3(-2.3, 2.1, 1.35),
+        fov: 73,
+      };
 
-    // Manual camera target for desk view (AboutScene)
-    // Adjust these values to fine-tune the camera position and FOV
-    const camTarget = {
-      position: new THREE.Vector3(-2.3, 2, 1.35),
-      fov: 73,
-    };
-
-    return {
-      model: cloned,
-      colliders: rects,
-      waypoints: wps,
-      cameraTarget: camTarget,
-    };
-  }, [modelSrc, scale]);
+      return {
+        model: cloned,
+        colliders: rects,
+        waypoints: wps,
+        cameraTarget: camTarget,
+        deskItems: deskItems,
+      };
+    }, [modelSrc, scale]);
 
   const defaultInteractions: InteractionDef[] = useMemo(() => {
     const list: InteractionDef[] = [...customInteractions];
@@ -530,6 +580,15 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
       return;
     }
 
+    // Desk Item Animation (Globe rotation)
+    if (
+      cameraMode === "desk" &&
+      hoveredDeskItem === "globe" &&
+      deskItems["globe"]
+    ) {
+      deskItems["globe"].rotation.y += delta;
+    }
+
     // Normal camera logic (when not animating)
     if (fixedCamera) {
       _cameraTarget.current.set(
@@ -597,6 +656,41 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
       <directionalLight position={[5, 10, 5]} intensity={0.5} castShadow />
       <Environment preset="city" />
       <primitive object={model} />
+      {/* Interactive Desk Items */}
+      {Object.entries(deskItems).map(([name, obj]) => (
+        <primitive
+          key={name}
+          object={obj}
+          onPointerOver={(e: any) => {
+            if (cameraMode === "desk") {
+              e.stopPropagation();
+              setHoveredDeskItem(name);
+              // Set cursor style
+              document.body.style.cursor = "pointer";
+            }
+          }}
+          onPointerOut={() => {
+            setHoveredDeskItem(null);
+            document.body.style.cursor = "auto";
+          }}
+          onClick={(e: any) => {
+            if (cameraMode === "desk") {
+              e.stopPropagation();
+              const info = DESK_ITEM_INFO[name];
+              if (info) {
+                // Use the dialog store we already have
+                useGameStore.getState().setDialog({
+                  open: true,
+                  title: info.title,
+                  body: info.body,
+                });
+              }
+            }
+          }}
+        >
+          {hoveredDeskItem === name && <Outlines thickness={6} color="black" />}
+        </primitive>
+      ))}
       <PlayerCharacter
         ref={playerRef}
         position={spawnPos}

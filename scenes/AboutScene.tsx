@@ -10,12 +10,18 @@ export const AboutScene = () => {
   // Handle ESC key to exit desk view
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.key === "Escape" || e.key === " " || e.key.toLowerCase() === "e") &&
-        cameraMode === "desk"
-      ) {
+      if (cameraMode !== "desk") return;
+
+      if (e.key === "Escape") {
         setCameraMode("normal");
         setDialog({ open: false });
+      } else if (e.key === " " || e.key.toLowerCase() === "e") {
+        const { dialog } = useGameStore.getState();
+        if (dialog.open) {
+          setDialog({ open: false });
+        } else {
+          setCameraMode("normal");
+        }
       }
     };
 
@@ -31,11 +37,6 @@ export const AboutScene = () => {
         radius: 2.0,
         onTrigger: () => {
           setCameraMode("desk");
-          setDialog({
-            open: true,
-            title: "Work Station",
-            body: "A clean desk for a focused mind. There are some sketches of 3D models here. Press ESC to return.",
-          });
         },
       },
       {
