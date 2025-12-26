@@ -29,6 +29,7 @@ interface BuildingBaseSceneProps {
   floorHeight?: number;
   onFrame?: (model: THREE.Group, delta: number, elapsed: number) => void;
   initialRotationY?: number;
+  cameraMode?: "normal" | "desk";
 }
 
 export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
@@ -44,6 +45,7 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
   floorHeight = 3.2,
   onFrame,
   initialRotationY = 0,
+  cameraMode = "normal",
 }) => {
   const setScene = useGameStore((s) => s.setScene);
   const setReturnWaypoint = useGameStore((s) => s.setReturnWaypoint);
@@ -57,6 +59,16 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
   // Optimization: Reusable vectors and refs to avoid GC spikes
   const _cameraTarget = useRef(new THREE.Vector3());
   const _tempVec = useRef(new THREE.Vector3());
+  const _originalCameraPos = useRef(new THREE.Vector3());
+  const _originalCameraLookAt = useRef(new THREE.Vector3());
+  const _originalCameraRotation = useRef(new THREE.Quaternion());
+  const _originalCameraFov = useRef(50);
+  const _targetDeskRotation = useRef(new THREE.Quaternion()); // Calc target here
+  const _animatedCameraPos = useRef(new THREE.Vector3());
+  const _animatedCameraLookAt = useRef(new THREE.Vector3());
+  const _animatedCameraRotation = useRef(new THREE.Quaternion());
+  const cameraAnimProgress = useRef(0);
+  const prevCameraMode = useRef(cameraMode);
 
   const [transition, setTransition] = useState<{
     path: THREE.Vector3[];
@@ -68,7 +80,7 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
 
   const { scene: modelSrc } = useGLTF(modelPath);
 
-  const { model, colliders, waypoints } = useMemo(() => {
+  const { model, colliders, waypoints, cameraTarget } = useMemo(() => {
     const cloned = modelSrc.clone(true);
     cloned.scale.setScalar(scale);
     cloned.updateMatrixWorld(true);
@@ -102,6 +114,7 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
       }
 
       if (name.startsWith("COLL_")) {
+        // ... existing collision logic ...
         o.visible = false;
         o.castShadow = false;
         o.receiveShadow = false;
@@ -122,7 +135,19 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
       }
     });
 
-    return { model: cloned, colliders: rects, waypoints: wps };
+    // Manual camera target for desk view (AboutScene)
+    // Adjust these values to fine-tune the camera position and FOV
+    const camTarget = {
+      position: new THREE.Vector3(-2.3, 2, 1.35),
+      fov: 73,
+    };
+
+    return {
+      model: cloned,
+      colliders: rects,
+      waypoints: wps,
+      cameraTarget: camTarget,
+    };
   }, [modelSrc, scale]);
 
   const defaultInteractions: InteractionDef[] = useMemo(() => {
@@ -279,6 +304,7 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
 
   const firstFrameRef = useRef(true);
   const prevInteractionRef = useRef<string | null>(null);
+  const isExitingRef = useRef(false);
 
   useFrame((state, delta) => {
     // Basic camera follow logic or fixed camera
@@ -328,10 +354,183 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
         prevInteractionRef.current = null;
       }
       activeActionRef.current = null;
+      // Don't return early if we're animating camera - let camera animation continue
+      if (cameraMode === "normal") {
+        return;
+      }
+    }
+
+    // Camera mode change detection
+    if (prevCameraMode.current !== cameraMode) {
+      if (cameraMode === "desk") {
+        // Store original camera position and target
+        _originalCameraPos.current.copy(state.camera.position);
+        _originalCameraLookAt.current.set(0, 0, 0);
+        _originalCameraRotation.current.copy(state.camera.quaternion);
+        _originalCameraFov.current =
+          (state.camera as THREE.PerspectiveCamera).fov || 50;
+
+        // Calculate Target Rotation: 90 degrees Left (Yaw) + Slight Up tilt (Pitch)
+        // Order YXZ: Yaw (turn) first, then Pitch (tilt)
+        const tiltUpAngle = Math.PI / 16; // ~15 degrees up
+        const rotQuat = new THREE.Quaternion().setFromEuler(
+          new THREE.Euler(tiltUpAngle, Math.PI / 2, 0, "YXZ")
+        );
+        _targetDeskRotation.current
+          .copy(_originalCameraRotation.current)
+          .premultiply(rotQuat);
+
+        cameraAnimProgress.current = 0;
+        prevCameraMode.current = cameraMode;
+        isExitingRef.current = false;
+      } else if (cameraMode === "normal" && prevCameraMode.current === "desk") {
+        // Start Exit Animation
+        if (!isExitingRef.current) {
+          isExitingRef.current = true;
+          cameraAnimProgress.current = 0;
+        }
+        // Do NOT update prevCameraMode yet - wait until animation finishes
+      } else {
+        prevCameraMode.current = cameraMode;
+      }
+    }
+
+    // Handle camera animation
+    const CAMERA_ANIM_SPEED = 2.0; // Speed of camera transition
+    if (cameraMode === "desk" && cameraTarget) {
+      // Animate to desk camera view
+      if (cameraAnimProgress.current < 1) {
+        cameraAnimProgress.current = Math.min(
+          1,
+          cameraAnimProgress.current + delta * CAMERA_ANIM_SPEED
+        );
+      }
+      const t = THREE.MathUtils.smoothstep(cameraAnimProgress.current, 0, 1);
+
+      _animatedCameraPos.current.lerpVectors(
+        _originalCameraPos.current,
+        cameraTarget.position,
+        t
+      );
+      // Animate rotation using slerp (spherical linear interpolation)
+      _animatedCameraRotation.current.slerpQuaternions(
+        _originalCameraRotation.current,
+        _targetDeskRotation.current,
+        t
+      );
+
+      // Animate FOV
+      const targetFov = (cameraTarget as any).fov || 50;
+      const animatedFov = THREE.MathUtils.lerp(
+        _originalCameraFov.current,
+        targetFov,
+        t
+      );
+
+      state.camera.position.copy(_animatedCameraPos.current);
+      state.camera.quaternion.copy(_animatedCameraRotation.current);
+      (state.camera as THREE.PerspectiveCamera).fov = animatedFov;
+      (state.camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+
+      // Toggle player visibility midway
+      if (t > 0.5 && playerRef.current) playerRef.current.visible = false;
+      // No FOV animation for simplicity
+
+      return; // Skip normal camera logic when in desk mode
+    } else if (cameraMode === "normal" && prevCameraMode.current === "desk") {
+      // Animate back to normal camera
+      if (cameraAnimProgress.current < 1) {
+        cameraAnimProgress.current = Math.min(
+          1,
+          cameraAnimProgress.current + delta * CAMERA_ANIM_SPEED
+        );
+      }
+      const t = THREE.MathUtils.smoothstep(cameraAnimProgress.current, 0, 1);
+
+      // Calculate target normal camera position
+      if (fixedCamera) {
+        _cameraTarget.current.set(
+          fixedCameraPos[0],
+          fixedCameraPos[1],
+          fixedCameraPos[2]
+        );
+      } else {
+        _cameraTarget.current.set(
+          playerPos.x,
+          playerPos.y + 6,
+          playerPos.z + 10
+        );
+      }
+
+      _animatedCameraPos.current.lerpVectors(
+        cameraTarget.position,
+        _cameraTarget.current,
+        t
+      );
+      const normalLookAt = fixedCamera
+        ? new THREE.Vector3(0, 0, 0)
+        : new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z);
+      _animatedCameraLookAt.current.lerpVectors(
+        _originalCameraLookAt.current,
+        normalLookAt,
+        t
+      );
+
+      // Calculate target normal camera rotation
+      const targetRotation = new THREE.Quaternion();
+      if (fixedCamera) {
+        // For fixed camera, calculate rotation to look at origin
+        const tempMatrix = new THREE.Matrix4();
+        tempMatrix.lookAt(
+          _cameraTarget.current,
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(0, 1, 0)
+        );
+        targetRotation.setFromRotationMatrix(tempMatrix);
+      } else {
+        // For following camera, calculate rotation to look at player
+        const tempMatrix = new THREE.Matrix4();
+        tempMatrix.lookAt(
+          _cameraTarget.current,
+          new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z),
+          new THREE.Vector3(0, 1, 0)
+        );
+        targetRotation.setFromRotationMatrix(tempMatrix);
+      }
+
+      // Animate rotation back
+      _animatedCameraRotation.current.slerpQuaternions(
+        _targetDeskRotation.current,
+        _originalCameraRotation.current,
+        t
+      );
+
+      // Animate FOV back to original
+      const startFov = (cameraTarget as any).fov || 50;
+      const animatedFov = THREE.MathUtils.lerp(
+        startFov,
+        _originalCameraFov.current,
+        t
+      );
+
+      state.camera.position.copy(_animatedCameraPos.current);
+      state.camera.quaternion.copy(_animatedCameraRotation.current);
+      (state.camera as THREE.PerspectiveCamera).fov = animatedFov;
+      (state.camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+
+      // Toggle player visibility midway
+      if (t > 0.5 && playerRef.current) playerRef.current.visible = true;
+
+      if (cameraAnimProgress.current >= 1) {
+        prevCameraMode.current = "normal";
+        isExitingRef.current = false;
+        // Show player when back in normal view
+        if (playerRef.current) playerRef.current.visible = true;
+      }
       return;
     }
 
-    // Camera
+    // Normal camera logic (when not animating)
     if (fixedCamera) {
       _cameraTarget.current.set(
         fixedCameraPos[0],
