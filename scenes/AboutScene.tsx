@@ -15,10 +15,13 @@ export const AboutScene = () => {
       if (e.key === "Escape") {
         setCameraMode("normal");
         setDialog({ open: false });
+        useGameStore.getState().setLetterOpen(false);
       } else if (e.key === " " || e.key.toLowerCase() === "e") {
-        const { dialog } = useGameStore.getState();
+        const { dialog, letterOpen, setLetterOpen } = useGameStore.getState();
         if (dialog.open) {
           setDialog({ open: false });
+        } else if (letterOpen) {
+          setLetterOpen(false);
         } else {
           setCameraMode("normal");
         }
@@ -37,6 +40,10 @@ export const AboutScene = () => {
         radius: 2.0,
         onTrigger: () => {
           setCameraMode("desk");
+          setDialog({
+            open: true,
+            body: "Click in the items on the table to know more. Click ESC to exit the desk.",
+          });
         },
       },
       {

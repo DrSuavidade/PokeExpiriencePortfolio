@@ -4,6 +4,7 @@ import { starters } from "../data/monsters";
 import { buildings } from "../data/buildings";
 import { Menu } from "./Menu";
 import { GameConsole } from "./GameConsole";
+import { LetterInterface } from "./LetterInterface";
 
 export const UIOverlay = () => {
   const {
@@ -339,6 +340,7 @@ export const UIOverlay = () => {
       {sceneContent}
       {dialogueBox}
       {consoleOpen && <GameConsole />}
+      <LetterInterface />
     </>
   );
 };

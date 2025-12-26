@@ -16,7 +16,6 @@ const DESK_ITEM_INFO: Record<string, { title: string; body: string }> = {
     title: "Mini Jukebox",
     body: "Some MF DOOM and Takanaka gives a chill vibe.",
   },
-  mail: { title: "Inbox", body: "You've got mail!" },
   notebook: {
     title: "About Me",
     body: "I'm a man of ideas and a lot of work. Always learning and growing. Really familiar with using AI but not to depend on it",
@@ -676,6 +675,12 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
           onClick={(e: any) => {
             if (cameraMode === "desk") {
               e.stopPropagation();
+
+              if (name === "mail") {
+                useGameStore.getState().setLetterOpen(true);
+                return;
+              }
+
               const info = DESK_ITEM_INFO[name];
               if (info) {
                 // Use the dialog store we already have

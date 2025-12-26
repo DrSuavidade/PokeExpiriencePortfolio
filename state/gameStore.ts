@@ -38,6 +38,8 @@ interface GameState {
   setConsoleOpen: (open: boolean) => void;
 
   setDialog: (dialog: { open: boolean; title?: string; body?: string; onConfirm?: () => void }) => void;
+  letterOpen: boolean;
+  setLetterOpen: (open: boolean) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -61,6 +63,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   setReturnWaypoint: (wp) => set({ returnWaypoint: wp }),
   consoleOpen: false,
   setConsoleOpen: (open) => set({ consoleOpen: open }),
+  letterOpen: false,
+  setLetterOpen: (open) => set({ letterOpen: open }),
 
   setScene: (scene) => {
     set({ isLoading: true });
