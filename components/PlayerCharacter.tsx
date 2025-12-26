@@ -51,8 +51,6 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       else (ref as any).current = controllerRef.current;
     }, [ref]);
 
-    const dialog = useGameStore((s) => s.dialog);
-
     const { scene, animations } = useGLTF("/models/Player.glb");
     const model = useMemo(() => SkeletonUtils.clone(scene), [scene]);
 
@@ -61,6 +59,7 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
 
     const keys = useRef<Record<string, boolean>>({});
     const [isInteracting, setIsInteracting] = useState(false);
+    const { menuOpen, consoleOpen, dialog, letterOpen } = useGameStore();
     const currentAction = useRef<ActionName>("Idle");
 
     // Optimization: Reusable vectors to avoid GC spikes
@@ -98,8 +97,11 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
     useEffect(() => {
       const down = (e: KeyboardEvent) => {
         keys.current[e.code] = true;
-        if (e.code === "KeyE") {
-          if (!isInteracting && !dialog.open) {
+        if (e.code === "KeyE" || e.code === "Space") {
+          const isOverlaid =
+            dialog.open || menuOpen || consoleOpen || letterOpen;
+          if (!isInteracting && !isOverlaid) {
+            keys.current = {}; // Stop movement
             setIsInteracting(true);
             onInteract?.();
           }
@@ -113,7 +115,14 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
         window.removeEventListener("keydown", down);
         window.removeEventListener("keyup", up);
       };
-    }, [isInteracting, onInteract, dialog.open]);
+    }, [
+      isInteracting,
+      onInteract,
+      dialog.open,
+      menuOpen,
+      consoleOpen,
+      letterOpen,
+    ]);
 
     // Shadows
     useEffect(() => {
@@ -165,8 +174,8 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       const ctrl = controllerRef.current;
       if (!ctrl) return;
 
-      // Freeze while dialog open
-      if (dialog.open) {
+      // Freeze while dialog, menu, console or letter open
+      if (dialog.open || menuOpen || consoleOpen || letterOpen) {
         if (currentAction.current !== "Idle") play("Idle", 0.12);
         return;
       }

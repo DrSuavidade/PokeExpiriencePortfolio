@@ -15,7 +15,7 @@ export type StarterId = "slothie" | "tigguin" | "elcoon";
 export interface Monster {
   id: StarterId;
   name: string;
-  type: "Fire" | "Grass" | "Water";
+  type: "Normal" | "Wild" | "Bandit";
   description: string;
   color: string;
   hp: number;

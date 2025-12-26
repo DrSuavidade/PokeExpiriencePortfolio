@@ -4,7 +4,7 @@ export const starters: Monster[] = [
   {
     id: "slothie",
     name: "Slothie",
-    type: "Grass",
+    type: "Normal",
     description: "A gentle plant creature that loves sunlight.",
     color: "#dcd481",
     hp: 45,
@@ -15,7 +15,7 @@ export const starters: Monster[] = [
   {
     id: "tigguin",
     name: "Tigguin",
-    type: "Fire",
+    type: "Wild",
     description: "A small fox with a fiery tail.",
     color: "#f59e0b",
     hp: 39,
@@ -26,7 +26,7 @@ export const starters: Monster[] = [
   {
     id: "elcoon",
     name: "Elcoon",
-    type: "Water",
+    type: "Bandit",
     description: "A playful water spirit.",
     color: "#7e7e7e",
     hp: 44,
