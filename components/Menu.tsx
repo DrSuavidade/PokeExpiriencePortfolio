@@ -3,7 +3,7 @@ import { useGameStore } from "../state/gameStore";
 import { starters } from "../data/monsters";
 import { buildings } from "../data/buildings";
 
-type MenuView = "main" | "pokemon" | "card" | "badges";
+type MenuView = "main" | "pokemon" | "card" | "badges" | "map";
 
 export const Menu = () => {
   const {
@@ -14,6 +14,8 @@ export const Menu = () => {
     consoleOpen,
     dialog,
     letterOpen,
+    setScene,
+    enterBuilding,
   } = useGameStore();
   const [view, setView] = useState<MenuView>("main");
   const [hoveredIdx, setHoveredIdx] = useState(0);
@@ -29,9 +31,16 @@ export const Menu = () => {
     elcoon: "/images/icons/racoonIcon.png",
   };
 
+  const cardBgMap: Record<string, string> = {
+    slothie: "/images/icons/CardSloth.png",
+    tigguin: "/images/icons/CardTinguin.png",
+    elcoon: "/images/icons/CardRacoon.png",
+  };
+
   const mainItems = [
     { label: "POKéMON", onClick: () => setView("pokemon") },
     { label: "TRAINER CARD", onClick: () => setView("card") },
+    { label: "TOWN MAP", onClick: () => setView("map") },
     { label: "BADGES", onClick: () => setView("badges") },
     { label: "EXIT", onClick: () => toggleMenu(false) },
   ];
@@ -169,12 +178,14 @@ export const Menu = () => {
               </button>
             </div>
             <div
-              className="aspect-[1.6/1] rounded-lg border-2 border-black p-3 flex flex-col justify-between shadow-inner relative overflow-hidden"
+              className="aspect-[1.6/1] rounded-lg border-2 border-black p-3 flex flex-col justify-between shadow-inner relative overflow-hidden bg-cover bg-center"
               style={{
                 backgroundColor: myMonster?.color || "#f8d030",
-                backgroundImage: `linear-gradient(135deg, ${
-                  myMonster?.color || "#f8d030"
-                } 0%, rgba(255,255,255,0.2) 100%)`,
+                backgroundImage: starter
+                  ? `url(${cardBgMap[starter]})`
+                  : `linear-gradient(135deg, ${
+                      myMonster?.color || "#f8d030"
+                    } 0%, rgba(255,255,255,0.2) 100%)`,
               }}
             >
               <div className="flex justify-between items-start">
@@ -265,6 +276,124 @@ export const Menu = () => {
             </p>
           </div>
         );
+      case "map":
+        return (
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-between items-center border-b-2 border-[#FFA500] pb-2">
+              <span className="pixel-font text-xs text-[#FFA500]">
+                TOWN MAP
+              </span>
+              <button
+                onClick={() => setView("main")}
+                className="pixel-font text-[10px] text-gray-400 hover:text-black"
+              >
+                BACK
+              </button>
+            </div>
+
+            <div className="relative aspect-[16/9] w-full bg-[#1a1a1a] rounded border-2 border-black/20 overflow-hidden shadow-inner font-sans">
+              <img
+                src="/images/map/MapBase.png"
+                className="w-full h-full object-cover opacity-90"
+                alt="Map"
+              />
+
+              {/* Home / Room */}
+              <div
+                onClick={() => {
+                  setScene("home");
+                  toggleMenu(false);
+                }}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all hover:scale-125 z-10 group"
+                style={{ top: "66%", left: "32%" }}
+              >
+                <img
+                  src="/images/map/bed.png"
+                  className="w-20 h-20 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)] pixelated"
+                />
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600/90 text-[10px] text-white px-3 py-1 rounded-sm opacity-0 group-hover:opacity-100 whitespace-nowrap pixel-font uppercase shadow-xl transition-opacity border-2 border-white pointer-events-none">
+                  TRAVEL
+                </span>
+              </div>
+
+              {/* Projects */}
+              <div
+                onClick={() => {
+                  enterBuilding("projects");
+                  toggleMenu(false);
+                }}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all hover:scale-125 z-10 group"
+                style={{ top: "75%", left: "77%" }}
+              >
+                <img
+                  src="/images/map/projects.png"
+                  className="w-20 h-20 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)] pixelated"
+                />
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600/90 text-[10px] text-white px-3 py-1 rounded-sm opacity-0 group-hover:opacity-100 whitespace-nowrap pixel-font uppercase shadow-xl transition-opacity border-2 border-white pointer-events-none">
+                  TRAVEL
+                </span>
+              </div>
+
+              {/* CV */}
+              <div
+                onClick={() => {
+                  enterBuilding("cv");
+                  toggleMenu(false);
+                }}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all hover:scale-125 z-10 group"
+                style={{ top: "22%", left: "33%" }}
+              >
+                <img
+                  src="/images/map/cv.png"
+                  className="w-20 h-20 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)] pixelated"
+                />
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600/90 text-[10px] text-white px-3 py-1 rounded-sm opacity-0 group-hover:opacity-100 whitespace-nowrap pixel-font uppercase shadow-xl transition-opacity border-2 border-white pointer-events-none">
+                  TRAVEL
+                </span>
+              </div>
+
+              {/* About */}
+              <div
+                onClick={() => {
+                  enterBuilding("about");
+                  toggleMenu(false);
+                }}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all hover:scale-125 z-10 group"
+                style={{ top: "66%", left: "48%" }}
+              >
+                <img
+                  src="/images/map/about.png"
+                  className="w-20 h-20 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)] pixelated"
+                />
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600/90 text-[10px] text-white px-3 py-1 rounded-sm opacity-0 group-hover:opacity-100 whitespace-nowrap pixel-font uppercase shadow-xl transition-opacity border-2 border-white pointer-events-none">
+                  TRAVEL
+                </span>
+              </div>
+
+              {/* Skills / Game */}
+              <div
+                onClick={() => {
+                  enterBuilding("skill");
+                  toggleMenu(false);
+                }}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all hover:scale-125 z-10 group"
+                style={{ top: "23%", left: "58%" }}
+              >
+                <img
+                  src="/images/map/game.png"
+                  className="w-20 h-20 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)] pixelated"
+                />
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600/90 text-[10px] text-white px-3 py-1 rounded-sm opacity-0 group-hover:opacity-100 whitespace-nowrap pixel-font uppercase shadow-xl transition-opacity border-2 border-white pointer-events-none">
+                  TRAVEL
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[7px] pixel-font text-center opacity-70 uppercase leading-relaxed text-gray-500">
+              Fly to any location instantly
+            </p>
+          </div>
+        );
       case "main":
       default:
         return (
@@ -309,9 +438,15 @@ export const Menu = () => {
       </button>
 
       {menuOpen && (
-        <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[400] flex flex-col">
+        <div
+          className={`fixed z-[400] flex flex-col transition-all duration-500 ease-in-out ${
+            view === "map"
+              ? "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[85vw] max-w-6xl h-auto"
+              : "right-4 top-1/2 -translate-y-1/2 w-80"
+          }`}
+        >
           {/* Pokemon Style Menu Box */}
-          <div className="bg-white border-[6px] border-[#383838] p-1 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.3)] min-w-[220px] rounded-sm relative overflow-hidden">
+          <div className="bg-white border-[6px] border-[#383838] p-1 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.3)] rounded-sm relative overflow-hidden">
             {/* Decorative Green Inner Border like Emerald */}
             <div
               className={`border-[2px] p-4 flex flex-col gap-4 transition-colors duration-300 ${
@@ -321,6 +456,8 @@ export const Menu = () => {
                   ? "border-[#5080C8]"
                   : view === "badges"
                   ? "border-[#C85050]"
+                  : view === "map"
+                  ? "border-[#FFA500]"
                   : "border-[#78C850]"
               }`}
             >
