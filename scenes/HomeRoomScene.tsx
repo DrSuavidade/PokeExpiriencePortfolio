@@ -29,6 +29,7 @@ export const HomeRoomScene = () => {
   const playerRef = useRef<THREE.Group>(null);
   const activeActionRef = useRef<null | (() => void)>(null);
   const prevInteractionRef = useRef<string | null>(null);
+  const camTargetRef = useRef(new THREE.Vector3(0, 5, 10));
 
   const { scene: roomSrc } = useGLTF("/models/Room.glb");
 
@@ -90,14 +91,6 @@ export const HomeRoomScene = () => {
   }, [room, returnWaypoint]);
   const playerBounds = React.useMemo(() => ({ x: 5.3, z: 5.3 }), []);
 
-  const getWaypointWorldPos = (nodeName: string) => {
-    const obj = room.getObjectByName(nodeName);
-    if (!obj) return null;
-    const v = new THREE.Vector3();
-    obj.getWorldPosition(v);
-    return v;
-  };
-
   const interactions: InteractionDef[] = useMemo(
     () => [
       {
@@ -157,10 +150,21 @@ export const HomeRoomScene = () => {
     [setScene, setDialog, setReturnWaypoint]
   );
 
+  const waypointPos = useMemo(() => {
+    const map: Record<string, THREE.Vector3> = {};
+    for (const def of interactions) {
+      const obj = room.getObjectByName(def.nodeName);
+      if (!obj) continue;
+      const v = new THREE.Vector3();
+      obj.getWorldPosition(v);
+      map[def.nodeName] = v;
+    }
+    return map;
+  }, [room, interactions]);
+
   useFrame((state) => {
     // 1. Smoothly transition camera to fixed room view
-    const targetPos = new THREE.Vector3(0, 5, 10);
-    state.camera.position.lerp(targetPos, 0.1);
+    state.camera.position.lerp(camTargetRef.current, 0.1);
     state.camera.lookAt(0, 0, 0);
 
     // 2. Interaction logic
@@ -181,12 +185,13 @@ export const HomeRoomScene = () => {
     let best: { def: InteractionDef; d: number } | null = null;
 
     for (const def of interactions) {
-      const wp = getWaypointWorldPos(def.nodeName);
+      const wp = waypointPos[def.nodeName];
       if (!wp) continue;
 
-      const d = playerPos.distanceTo(wp);
-      if (d <= def.radius) {
-        if (!best || d < best.d) best = { def, d };
+      const r2 = def.radius * def.radius;
+      const d2 = playerPos.distanceToSquared(wp);
+      if (d2 <= r2) {
+        if (!best || d2 < best.d) best = { def, d: d2 };
       }
     }
 

@@ -11,14 +11,27 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
     },
     plugins: [react(), tailwindcss()],
-    define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
       }
-    }
+    },
+    esbuild: {
+      drop: mode === "production" ? ["console", "debugger"] : [],
+    },
+    build: {
+      sourcemap: false,
+      reportCompressedSize: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            three: ["three"],
+            r3f: ["@react-three/fiber", "@react-three/drei", "three-stdlib"],
+            ui: ["lucide-react", "@lottiefiles/dotlottie-react"],
+            state: ["zustand"],
+          },
+        },
+      },
+    },
   };
 });

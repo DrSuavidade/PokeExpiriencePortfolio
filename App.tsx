@@ -1,9 +1,15 @@
-import React from "react";
-import { SceneRoot } from "./engine/SceneRoot";
-import { UIOverlay } from "./components/UIOverlay";
+import React, { Suspense } from "react";
 import GameBoyIntro from "./components/IntrOverlay";
 import LoadingOverlay from "./components/LoadingOverlay";
 import { useGameStore } from "./state/gameStore";
+
+// Lazy-load heavy stuff so Three.js/r3f isn't in the initial bundle
+const SceneRoot = React.lazy(() =>
+  import("./engine/SceneRoot").then((m) => ({ default: m.SceneRoot }))
+);
+const UIOverlay = React.lazy(() =>
+  import("./components/UIOverlay").then((m) => ({ default: m.UIOverlay }))
+);
 
 export default function App() {
   const introDone = useGameStore((s) => s.introDone);
@@ -14,12 +20,16 @@ export default function App() {
     <div className="h-screen w-screen overflow-hidden bg-black relative">
       {!introDone && <GameBoyIntro onComplete={() => setIntroDone(true)} />}
 
-      {introDone && isLoading && <LoadingOverlay isVisible={true} />}
+      {/* Only show loader once intro is done */}
+      {introDone && isLoading && <LoadingOverlay isVisible />}
 
-      <div style={{ visibility: introDone ? "visible" : "hidden" }}>
-        <SceneRoot />
-        <UIOverlay />
-      </div>
+      {/* Do NOT mount Canvas/UI until intro is done */}
+      {introDone && (
+        <Suspense fallback={<LoadingOverlay isVisible />}>
+          <SceneRoot />
+          <UIOverlay />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -123,6 +123,25 @@ export const ProjectsPuzzle: React.FC = () => {
   const boardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!puzzleOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+
+      // Consume this ESC so the global "open menu" handler doesn't run.
+      e.preventDefault();
+      e.stopPropagation();
+      (e as any).stopImmediatePropagation?.();
+
+      setPuzzleOpen(false);
+    };
+
+    // Capture phase so we run before other listeners
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [puzzleOpen, setPuzzleOpen]);
+
+  useEffect(() => {
     if (puzzleOpen) {
       setPieces(generateShuffledPuzzle());
       setIsWon(false);
