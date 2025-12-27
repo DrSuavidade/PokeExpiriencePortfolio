@@ -3,10 +3,21 @@ import { SceneId, StarterId, Progress } from "../types";
 
 interface GameState {
   scene: SceneId;
+  previousScene: SceneId | null;
   starter?: StarterId;
   activeBuildingId?: string;
   menuOpen: boolean;
   progress: Progress;
+  battleState: {
+    playerHp: number;
+    enemyHp: number;
+    isTurn: boolean;
+    message: string;
+    isVictory: boolean;
+    isBlocking: boolean;
+    isMeditating: boolean;
+    attackMultiplier: number;
+  };
 
   // Interaction System
   interactionText: string | null;
@@ -31,23 +42,44 @@ interface GameState {
     title?: string;
     body?: string;
     onConfirm?: () => void;
+    onClose?: () => void;
   };
   returnWaypoint?: string;
   setReturnWaypoint: (wp: string | undefined) => void;
   consoleOpen: boolean;
   setConsoleOpen: (open: boolean) => void;
 
-  setDialog: (dialog: { open: boolean; title?: string; body?: string; onConfirm?: () => void }) => void;
+  setDialog: (dialog: {
+    open: boolean;
+    title?: string;
+    body?: string;
+    onConfirm?: () => void;
+    onClose?: () => void;
+  }) => void;
   letterOpen: boolean;
   setLetterOpen: (open: boolean) => void;
+  // Battle Actions
+  updateBattle: (update: Partial<GameState["battleState"]>) => void;
+  resetBattle: () => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
   scene: "landing",
+  previousScene: null,
   starter: undefined,
   activeBuildingId: undefined,
   menuOpen: false,
   progress: { defeatedNPCs: {}, unlockedSecret: false },
+  battleState: {
+    playerHp: 100,
+    enemyHp: 100,
+    isTurn: true,
+    message: "A wild Guardian appears!",
+    isVictory: false,
+    isBlocking: false,
+    isMeditating: false,
+    attackMultiplier: 1,
+  },
 
   interactionText: null,
   interactAction: null,
@@ -67,27 +99,36 @@ export const useGameStore = create<GameState>((set, get) => ({
   setLetterOpen: (open) => set({ letterOpen: open }),
 
   setScene: (scene) => {
+    const { scene: currentScene } = get();
     set({ isLoading: true });
     setTimeout(() => {
-      set({ scene, interactionText: null, interactAction: null });
+      set({
+        scene,
+        previousScene: currentScene,
+        interactionText: null,
+        interactAction: null
+      });
       setTimeout(() => set({ isLoading: false }), 800);
     }, 600);
   },
 
   chooseStarter: (starter) => {
+    const { scene: currentScene } = get();
     set({ isLoading: true });
     setTimeout(() => {
-      set({ starter, scene: "home" });
+      set({ starter, scene: "home", previousScene: currentScene });
       setTimeout(() => set({ isLoading: false }), 800);
     }, 600);
   },
 
   enterBuilding: (buildingId) => {
+    const { scene: currentScene } = get();
     set({ isLoading: true });
     setTimeout(() => {
       set({
         activeBuildingId: buildingId,
         scene: buildingId as SceneId,
+        previousScene: currentScene,
         interactionText: null,
         interactAction: null
       });
@@ -113,6 +154,20 @@ export const useGameStore = create<GameState>((set, get) => ({
   toggleMenu: (open) => set((state) => ({ menuOpen: open ?? !state.menuOpen })),
 
   setInteraction: (text, action) => set({ interactionText: text, interactAction: action }),
+
+  updateBattle: (update) => set((s) => ({ battleState: { ...s.battleState, ...update } })),
+  resetBattle: () => set({
+    battleState: {
+      playerHp: 100,
+      enemyHp: 100,
+      isTurn: true,
+      message: "A wild Guardian appears!",
+      isVictory: false,
+      isBlocking: false,
+      isMeditating: false,
+      attackMultiplier: 1,
+    }
+  }),
 
   resetGame: () => {
     set({ isLoading: true });

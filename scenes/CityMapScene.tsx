@@ -355,18 +355,6 @@ export const CityMapScene = () => {
         far={10}
       />
 
-      {/* Badge completion markers */}
-      {badgeMarkers.map(({ id, pos }) => {
-        const done = !!defeatedNPCs[id];
-        if (!done) return null;
-        return (
-          <mesh key={id} position={[pos.x, pos.y + 1.2, pos.z]}>
-            <sphereGeometry args={[0.18, 16, 16]} />
-            <meshBasicMaterial color="#4ade80" />
-          </mesh>
-        );
-      })}
-
       <PlayerCharacter
         ref={playerRef}
         position={spawnPos}

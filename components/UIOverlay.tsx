@@ -5,6 +5,7 @@ import { buildings } from "../data/buildings";
 import { Menu } from "./Menu";
 import { GameConsole } from "./GameConsole";
 import { LetterInterface } from "./LetterInterface";
+import { BattleHUD } from "./BattleHUD";
 
 export const UIOverlay = () => {
   const {
@@ -21,6 +22,7 @@ export const UIOverlay = () => {
     setDialog,
     consoleOpen,
     setConsoleOpen,
+    resetBattle,
   } = useGameStore();
   const [battleLog, setBattleLog] = useState<string[]>([]);
   const [battleTurn, setBattleTurn] = useState(0);
@@ -31,7 +33,10 @@ export const UIOverlay = () => {
   const dialogueBox = dialog.open && (
     <div className="fixed bottom-10 left-0 right-0 z-[300] flex flex-col items-center pointer-events-none">
       <div
-        onClick={() => setDialog({ open: false })}
+        onClick={() => {
+          dialog.onClose?.();
+          setDialog({ ...dialog, open: false });
+        }}
         className="bg-black/70 backdrop-blur text-white p-6 rounded-xl border-4 border-white pixel-font text-center max-w-2xl w-full mx-4 pointer-events-auto cursor-pointer"
       >
         {dialog.title && (
@@ -77,7 +82,8 @@ export const UIOverlay = () => {
         dialog.open &&
         (e.key === "e" || e.key === "E" || e.code === "Space")
       ) {
-        setDialog({ open: false });
+        dialog.onClose?.();
+        setDialog({ ...dialog, open: false });
         return;
       }
 
@@ -228,7 +234,10 @@ export const UIOverlay = () => {
 
               {!isDefeated ? (
                 <button
-                  onClick={() => setScene("battle")}
+                  onClick={() => {
+                    resetBattle();
+                    setScene("battle");
+                  }}
                   className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded pixel-font shadow-lg transform transition hover:scale-105"
                 >
                   BATTLE!
@@ -243,73 +252,6 @@ export const UIOverlay = () => {
         </div>
       );
     }
-  } else if (scene === "battle") {
-    const building = buildings.find((b) => b.id === activeBuildingId);
-    const myMonster = starters.find((s) => s.id === starter);
-
-    const handleAttack = () => {
-      setBattleTurn((t) => t + 1);
-      setBattleLog((prev) => [
-        ...prev,
-        `${myMonster?.name} used Attack! It's super effective!`,
-      ]);
-
-      setTimeout(() => {
-        setBattleLog((prev) => [
-          ...prev,
-          `${building?.npcName}'s monster fainted!`,
-        ]);
-        setTimeout(() => {
-          if (activeBuildingId) markDefeated(activeBuildingId);
-          setScene("building");
-          setBattleLog([]);
-        }, 1500);
-      }, 1000);
-    };
-
-    sceneContent = (
-      <div className="fixed inset-0 z-30 pointer-events-none flex flex-col justify-between p-4">
-        {/* HUD Top Left - Opponent */}
-        <div className="self-start bg-white/90 p-4 rounded-lg border-2 border-black min-w-[200px]">
-          <h3 className="font-bold">{building?.npcName}</h3>
-          <div className="w-full h-2 bg-gray-300 mt-2 rounded-full overflow-hidden">
-            <div className="h-full bg-red-500 w-[40%]"></div>
-          </div>
-        </div>
-
-        {/* HUD Bottom Right - Player */}
-        <div className="self-end bg-white/90 p-4 rounded-lg border-2 border-black min-w-[200px] mb-32">
-          <h3 className="font-bold">{myMonster?.name}</h3>
-          <div className="w-full h-2 bg-gray-300 mt-2 rounded-full overflow-hidden">
-            <div className="h-full bg-green-500 w-full"></div>
-          </div>
-          <p className="text-xs mt-1">LVL 5</p>
-        </div>
-
-        {/* Battle Text Box */}
-        <div className="absolute bottom-4 left-4 right-4 h-32 bg-gray-900/90 border-4 border-white rounded-lg p-4 flex pointer-events-auto">
-          <div className="flex-1 text-white pixel-font text-sm leading-6 overflow-y-auto">
-            {battleLog.length === 0
-              ? `Wild ${building?.npcName} wants to fight!`
-              : battleLog.map((log, i) => <div key={i}>{log}</div>)}
-          </div>
-          <div className="w-48 ml-4 grid grid-cols-1 gap-2">
-            <button
-              onClick={handleAttack}
-              className="bg-white hover:bg-gray-200 text-black border-2 border-gray-400 rounded pixel-font text-xs"
-            >
-              ATTACK
-            </button>
-            <button
-              onClick={() => setScene("building")}
-              className="bg-white hover:bg-gray-200 text-black border-2 border-gray-400 rounded pixel-font text-xs"
-            >
-              RUN
-            </button>
-          </div>
-        </div>
-      </div>
-    );
   } else if (scene === "ending") {
     sceneContent = (
       <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center text-white p-8 text-center animate-fade-in">
@@ -340,6 +282,7 @@ export const UIOverlay = () => {
       {sceneContent}
       {dialogueBox}
       {consoleOpen && <GameConsole />}
+      {scene === "battle" && <BattleHUD />}
       <LetterInterface />
     </>
   );

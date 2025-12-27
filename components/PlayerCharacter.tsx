@@ -97,13 +97,23 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
     useEffect(() => {
       const down = (e: KeyboardEvent) => {
         keys.current[e.code] = true;
-        if (e.code === "KeyE" || e.code === "Space") {
+        if (
+          e.code === "KeyE" ||
+          e.code === "Space" ||
+          e.code === "Enter" ||
+          e.code === "NumpadEnter"
+        ) {
           const isOverlaid =
             dialog.open || menuOpen || consoleOpen || letterOpen;
           if (!isInteracting && !isOverlaid) {
             keys.current = {}; // Stop movement
             setIsInteracting(true);
             onInteract?.();
+
+            // If no interact animation exists, reset instantly so we don't get stuck
+            if (!actions || (!actions.Interact && !actions.Action)) {
+              setIsInteracting(false);
+            }
           }
         }
       };
@@ -180,12 +190,6 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
         return;
       }
 
-      // Interact anim control
-      if (isInteracting) {
-        if (currentAction.current !== "Interact") play("Interact", 0.08);
-        return;
-      }
-
       const moveSpeed = speed * delta;
 
       let dx = 0;
@@ -197,6 +201,17 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       if (keys.current["ArrowRight"] || keys.current["KeyD"]) dx += moveSpeed;
 
       const moving = dx !== 0 || dz !== 0 || forceWalk;
+
+      // If we are moving (manually or forced), we are definitely not "interacting" anymore
+      if (moving && isInteracting) {
+        setIsInteracting(false);
+      }
+
+      // Interact anim control (skipped if moving or forceWalk is active)
+      if (isInteracting && !moving) {
+        if (currentAction.current !== "Interact") play("Interact", 0.08);
+        return;
+      }
 
       if (moving) {
         if (currentAction.current !== "Walk") play("Walk", 0.12);

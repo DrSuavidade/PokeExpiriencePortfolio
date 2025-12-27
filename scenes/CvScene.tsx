@@ -42,6 +42,8 @@ export const CvScene = () => {
     []
   );
 
+  const defeatedNPCs = useGameStore((s) => s.progress.defeatedNPCs);
+
   const interactions = useMemo(
     () => [
       {
@@ -60,20 +62,29 @@ export const CvScene = () => {
       },
       {
         nodeName: "waypointCv",
-        label: "Battle?",
+        label: defeatedNPCs["cv"] ? "Talk" : "Battle?",
         radius: 2.0,
-        onTrigger: () =>
-          setDialog({
-            open: true,
-            title: "CV Guardian",
-            body: "You've found the CV waypoint! Do you seek knowledge... or a battle?",
-            onConfirm: () => {
-              setScene("battle");
-            },
-          }),
+        onTrigger: () => {
+          if (defeatedNPCs["cv"]) {
+            setDialog({
+              open: true,
+              title: "CV Guardian",
+              body: "You were a great opponent! Maybe I win next time. Feel free to explore the balcony as long as you like.",
+            });
+          } else {
+            setDialog({
+              open: true,
+              title: "CV Guardian",
+              body: "You've found the CV Guardian! Do you seek a battle with him?",
+              onConfirm: () => {
+                setScene("battle");
+              },
+            });
+          }
+        },
       },
     ],
-    [setDialog, setScene]
+    [setDialog, setScene, defeatedNPCs]
   );
 
   const teleports: Record<string, any> = {

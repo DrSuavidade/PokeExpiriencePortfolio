@@ -323,8 +323,26 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
     floorHeight,
   ]);
 
+  const previousScene = useGameStore((s) => s.previousScene);
+  const returnWaypointStore = useGameStore((s) => s.returnWaypoint);
+
   const spawnPos: [number, number, number] = useMemo(() => {
-    // Try to find an exit or entrance waypoint to spawn at
+    // 1. Only use returnWaypointStore for internal spawning if we are coming from a Battle
+    // This identifies a return from a nested "interaction scene" rather than an entry from the map.
+    if (
+      previousScene === "battle" &&
+      returnWaypointStore &&
+      waypoints[returnWaypointStore]
+    ) {
+      const wp = waypoints[returnWaypointStore];
+      const isHigh =
+        returnWaypointStore === "waypointCv" ||
+        returnWaypointStore.toLowerCase().includes("down");
+      const y = isHigh ? floorHeight : wp.y || 0;
+      return [wp.x, y, wp.z + 1.0] as [number, number, number];
+    }
+
+    // 2. Fallback: Try to find an exit or entrance waypoint to spawn at
     const exitWpName = Object.keys(waypoints).find(
       (name) =>
         name.toLowerCase().includes("exit") ||
@@ -339,15 +357,9 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
       return [wp.x, 0, wp.z + 1.0] as [number, number, number];
     }
 
-    // If we have a fallbackExit, we need a position for it.
-    // Let's just spawn at [0,0,5] and put the fallback exit there
-    if (!exitWpName) {
-      waypoints["fallbackExit"] = new THREE.Vector3(0, 0, 5);
-      return [0, 0, 4] as [number, number, number];
-    }
-
+    // 3. Last fallback: Center-ish
     return [0, 0, 2] as [number, number, number];
-  }, [waypoints, activeBuildingId]);
+  }, [waypoints, returnWaypointStore, floorHeight, previousScene]);
 
   // Snap camera on mount
   useLayoutEffect(() => {

@@ -46,6 +46,38 @@ export const GameConsole = () => {
     });
   };
 
+  // Keyboard navigation
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if dialog is already open
+      const dialogOpen = useGameStore.getState().dialog.open;
+      if (dialogOpen) return;
+
+      switch (e.key) {
+        case "ArrowLeft":
+        case "a":
+        case "A":
+          prev();
+          break;
+        case "ArrowRight":
+        case "d":
+        case "D":
+          next();
+          break;
+        case "Enter":
+        case " ":
+          handleSelect();
+          break;
+        case "Escape":
+          setConsoleOpen(false);
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [index, handleSelect]); // Re-bind when index changes to ensure handleSelect has right context
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-md bg-black/40">
       {/* TV Frame */}
