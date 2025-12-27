@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useGameStore } from "../state/gameStore";
+import { buildings } from "../data/buildings";
 
 export const BadgeNotification = () => {
   const notification = useGameStore((s) => s.badgeNotification);
@@ -8,6 +9,12 @@ export const BadgeNotification = () => {
     id: string;
     name: string;
   } | null>(null);
+
+  const badgeColor = useMemo(() => {
+    if (!localDisplay) return "#eab308"; // Default gold
+    const b = buildings.find((building) => building.id === localDisplay.id);
+    return b?.color || "#eab308";
+  }, [localDisplay]);
 
   useEffect(() => {
     if (notification) {
@@ -44,9 +51,8 @@ export const BadgeNotification = () => {
           color: "white",
           padding: "16px 24px",
           borderRadius: "8px",
-          border: "2px solid #eab308",
-          boxShadow:
-            "0 10px 25px rgba(0,0,0,0.5), inset 0 0 10px rgba(234, 179, 8, 0.2)",
+          border: `2px solid ${badgeColor}`,
+          boxShadow: `0 10px 25px rgba(0,0,0,0.5), inset 0 0 10px ${badgeColor}33`,
           display: "flex",
           alignItems: "center",
           gap: "15px",
@@ -57,13 +63,13 @@ export const BadgeNotification = () => {
           style={{
             width: "40px",
             height: "40px",
-            background: "#eab308",
+            background: badgeColor,
             borderRadius: "50%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: "20px",
-            boxShadow: "0 0 15px rgba(234, 179, 8, 0.5)",
+            boxShadow: `0 0 15px ${badgeColor}80`,
           }}
         >
           🏆
@@ -73,7 +79,7 @@ export const BadgeNotification = () => {
           <div
             style={{
               fontSize: "10px",
-              color: "#eab308",
+              color: badgeColor,
               marginBottom: "4px",
               textTransform: "uppercase",
               letterSpacing: "1px",

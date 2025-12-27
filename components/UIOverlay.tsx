@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Mail, Linkedin } from "lucide-react";
 import { useGameStore } from "../state/gameStore";
 import { starters } from "../data/monsters";
 import { buildings } from "../data/buildings";
@@ -7,6 +8,7 @@ import { GameConsole } from "./GameConsole";
 import { LetterInterface } from "./LetterInterface";
 import { BattleHUD } from "./BattleHUD";
 import { BadgeNotification } from "./BadgeNotification";
+import { ProjectsPuzzle } from "./ProjectsPuzzle";
 
 export const UIOverlay = () => {
   const {
@@ -24,6 +26,8 @@ export const UIOverlay = () => {
     consoleOpen,
     setConsoleOpen,
     resetBattle,
+    puzzleOpen,
+    setPuzzleOpen,
   } = useGameStore();
   const [battleLog, setBattleLog] = useState<string[]>([]);
   const [battleTurn, setBattleTurn] = useState(0);
@@ -94,6 +98,12 @@ export const UIOverlay = () => {
         return;
       }
 
+      // Close puzzle with Escape
+      if (puzzleOpen && e.key === "Escape") {
+        setPuzzleOpen(false);
+        return;
+      }
+
       // Otherwise trigger world interaction
       if (
         (e.key === "e" || e.key === "E" || e.code === "Space") &&
@@ -104,7 +114,15 @@ export const UIOverlay = () => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [interactAction, dialog.open, setDialog]);
+  }, [
+    interactAction,
+    dialog.open,
+    setDialog,
+    consoleOpen,
+    setConsoleOpen,
+    puzzleOpen,
+    setPuzzleOpen,
+  ]);
 
   // --- GENERAL HUD (Interaction Prompt) ---
   const interactionPrompt = interactionText && (
@@ -257,16 +275,35 @@ export const UIOverlay = () => {
     sceneContent = (
       <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center text-white p-8 text-center animate-fade-in">
         <h1 className="text-4xl text-yellow-400 pixel-font mb-8">
-          CONGRATULATIONS!
+          You've reached the end
         </h1>
+        <p className="max-w-xl text-lg mb-2 leading-relaxed">
+          But the journey is just starting...
+        </p>
         <p className="max-w-xl text-lg mb-8 leading-relaxed">
-          You have explored the city, defeated the bugs, and uncovered the
-          portfolio.
+          Want to be a part of it?
         </p>
         <div className="bg-white/10 p-8 rounded-lg mb-8 backdrop-blur">
-          <h2 className="text-xl font-bold mb-4">Let's Connect</h2>
-          <p className="mb-2">email@example.com</p>
-          <p>linkedin.com/in/you</p>
+          <h2 className="text-xl font-bold mb-6">Feel free to contact me</h2>
+          <div className="flex justify-center gap-8">
+            <a
+              href="https://mail.google.com/mail/?view=cm&to=caaddp@gmail.com"
+              target="_blank"
+              className="text-white hover:text-yellow-400 transition-colors transform hover:scale-110"
+              title="Email me"
+            >
+              <Mail size={48} strokeWidth={1.5} />
+            </a>
+            <a
+              href="https://www.linkedin.com/in/pedro-ddaa-costa/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-yellow-400 transition-colors transform hover:scale-110"
+              title="LinkedIn Profile"
+            >
+              <Linkedin size={48} strokeWidth={1.5} />
+            </a>
+          </div>
         </div>
         <button
           onClick={resetGame}
@@ -286,6 +323,7 @@ export const UIOverlay = () => {
       {scene === "battle" && <BattleHUD />}
       <LetterInterface />
       <BadgeNotification />
+      <ProjectsPuzzle />
     </>
   );
 };

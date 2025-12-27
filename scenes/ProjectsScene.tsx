@@ -5,20 +5,27 @@ import { useGameStore } from "../state/gameStore";
 
 export const ProjectsScene = () => {
   const setDialog = useGameStore((s) => s.setDialog);
+  const setPuzzleOpen = useGameStore((s) => s.setPuzzleOpen);
+  const defeatedNPCs = useGameStore((s) => s.progress.defeatedNPCs);
 
   const interactions = useMemo(
     () => [
       // --- Info Waypoints ---
       {
         nodeName: "waypointInfo",
-        label: "Read Info",
+        label: "Projects Terminal",
         radius: 1.8,
-        onTrigger: () =>
-          setDialog({
-            open: true,
-            title: "Gallery Info",
-            body: "Welcome to the Projects Gallery. Here you can find my latest work in 3D and Web development.",
-          }),
+        onTrigger: () => {
+          if (defeatedNPCs["projects"]) {
+            setDialog({
+              open: true,
+              title: "Badge Earned",
+              body: "You have already completed the puzzle and earned the Projects Badge.",
+            });
+          } else {
+            setPuzzleOpen(true);
+          }
+        },
       },
       {
         nodeName: "waypointInfo2",

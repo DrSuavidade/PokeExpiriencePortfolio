@@ -55,6 +55,10 @@ interface GameState {
   setReturnWaypoint: (wp: string | undefined) => void;
   consoleOpen: boolean;
   setConsoleOpen: (open: boolean) => void;
+  letterOpen: boolean;
+  setLetterOpen: (open: boolean) => void;
+  puzzleOpen: boolean;
+  setPuzzleOpen: (open: boolean) => void;
 
   setDialog: (dialog: {
     open: boolean;
@@ -63,8 +67,7 @@ interface GameState {
     onConfirm?: () => void;
     onClose?: () => void;
   }) => void;
-  letterOpen: boolean;
-  setLetterOpen: (open: boolean) => void;
+
   // Battle Actions
   updateBattle: (update: Partial<GameState["battleState"]>) => void;
   resetBattle: () => void;
@@ -108,7 +111,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     const newDefeated = { ...progress.defeatedNPCs, [id]: true };
     const defeatedCount = Object.values(newDefeated).filter(Boolean).length;
-    const unlockedSecret = defeatedCount >= 4; // 4 badges total
+    const unlockedSecret = defeatedCount >= 4;
 
     set({
       progress: {
@@ -118,7 +121,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       badgeNotification: { id, name: badgeName }
     });
 
-    // Auto-clear notification after 6 seconds (to match fade-out)
     setTimeout(() => {
       get().clearBadgeNotification();
     }, 6000);
@@ -137,6 +139,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   setConsoleOpen: (open) => set({ consoleOpen: open }),
   letterOpen: false,
   setLetterOpen: (open) => set({ letterOpen: open }),
+  puzzleOpen: false,
+  setPuzzleOpen: (open) => set({ puzzleOpen: open }),
 
   setScene: (scene) => {
     const { scene: currentScene } = get();

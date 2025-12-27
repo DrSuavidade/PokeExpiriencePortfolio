@@ -23,6 +23,7 @@ export const HomeRoomScene = () => {
   const menuOpen = useGameStore((s) => s.menuOpen);
   const consoleOpen = useGameStore((s) => s.consoleOpen);
   const letterOpen = useGameStore((s) => s.letterOpen);
+  const puzzleOpen = useGameStore((s) => s.puzzleOpen);
   const returnWaypoint = useGameStore((s) => s.returnWaypoint);
 
   const playerRef = useRef<THREE.Group>(null);
@@ -166,7 +167,8 @@ export const HomeRoomScene = () => {
     const playerPos = playerRef.current?.position;
     if (!playerPos) return;
 
-    const isOverlaid = dialog.open || menuOpen || consoleOpen || letterOpen;
+    const isOverlaid =
+      dialog.open || menuOpen || consoleOpen || letterOpen || puzzleOpen;
     if (isOverlaid) {
       if (prevInteractionRef.current !== null) {
         setInteraction(null, null);

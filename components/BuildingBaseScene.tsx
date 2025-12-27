@@ -76,6 +76,7 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
   const menuOpen = useGameStore((s) => s.menuOpen);
   const consoleOpen = useGameStore((s) => s.consoleOpen);
   const letterOpen = useGameStore((s) => s.letterOpen);
+  const puzzleOpen = useGameStore((s) => s.puzzleOpen);
   const activeBuildingId = useGameStore((s) => s.activeBuildingId);
 
   const playerRef = useRef<THREE.Group>(null);
@@ -418,7 +419,8 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
       // Continue to camera and interaction logic so they stay updated during transition
     }
 
-    const isOverlaid = dialog.open || menuOpen || consoleOpen || letterOpen;
+    const isOverlaid =
+      dialog.open || menuOpen || consoleOpen || letterOpen || puzzleOpen;
     if (isOverlaid) {
       if (prevInteractionRef.current !== null) {
         setInteraction(null, null);
