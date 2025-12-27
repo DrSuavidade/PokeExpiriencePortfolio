@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useGameStore } from "../state/gameStore";
 import { starters } from "../data/monsters";
+import { buildings } from "../data/buildings";
 
 type MenuView = "main" | "pokemon" | "card" | "badges";
 
@@ -218,17 +219,41 @@ export const Menu = () => {
             <div className="grid grid-cols-2 gap-3 p-2">
               {["about", "projects", "cv", "skill"].map((id) => {
                 const hasBadge = !!progress.defeatedNPCs[id];
+                const building = buildings.find((b) => b.id === id);
+                const color = building?.color || "#f8d030";
+
                 return (
                   <div
                     key={id}
-                    className={`aspect-square rounded-full border-2 flex flex-col items-center justify-center gap-1 ${
+                    className={`aspect-square rounded-full border-2 flex flex-col items-center justify-center gap-1 transition-all duration-500 ${
                       hasBadge
-                        ? "bg-yellow-400 border-yellow-600 shadow-md scale-105"
-                        : "bg-gray-100 border-gray-300 opacity-40 grayscale"
+                        ? "shadow-[0_0_15px_rgba(0,0,0,0.2)] scale-105"
+                        : "bg-gray-100 border-gray-300 opacity-20 grayscale"
                     }`}
+                    style={
+                      hasBadge
+                        ? {
+                            backgroundColor: color,
+                            borderColor: "white",
+                            boxShadow: `0 0 10px ${color}80, inset 0 0 8px rgba(255,255,255,0.4)`,
+                          }
+                        : {}
+                    }
                   >
-                    <div className="w-4 h-4 rounded-full bg-white/50" />
-                    <span className="pixel-font text-[6px] uppercase">
+                    <div
+                      className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                        hasBadge ? "bg-white/30" : "bg-gray-300"
+                      }`}
+                    >
+                      {hasBadge && (
+                        <div className="w-2 h-2 rounded-full bg-white shadow-[0_0_5px_white]" />
+                      )}
+                    </div>
+                    <span
+                      className={`pixel-font text-[6px] uppercase font-bold ${
+                        hasBadge ? "text-white drop-shadow-sm" : "text-gray-400"
+                      }`}
+                    >
                       {id}
                     </span>
                   </div>

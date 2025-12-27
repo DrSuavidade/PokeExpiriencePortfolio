@@ -46,15 +46,20 @@ export const GameConsole = () => {
     });
   };
 
-  // Skill Badge Timer (1 min)
-  React.useEffect(() => {
-    const awardBadge = useGameStore.getState().awardBadge;
-    const timer = setTimeout(() => {
-      awardBadge("skill");
-    }, 60000); // 1 minute
+  // Skill Badge: Awarded by scrolling through all games
+  const [viewedIndices, setViewedIndices] = useState<number[]>([0]);
 
-    return () => clearTimeout(timer);
-  }, []);
+  React.useEffect(() => {
+    if (!viewedIndices.includes(index)) {
+      setViewedIndices((prev) => [...prev, index]);
+    }
+  }, [index, viewedIndices]);
+
+  React.useEffect(() => {
+    if (viewedIndices.length === games.length) {
+      useGameStore.getState().awardBadge("skill");
+    }
+  }, [viewedIndices]);
 
   // Keyboard navigation
   React.useEffect(() => {
