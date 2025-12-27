@@ -16,7 +16,7 @@ type InteractionDef = {
 };
 
 // ✅ change if your file name/path differs
-const TOWN_GLB = "/models/Town.glb";
+const TOWN_GLB = "/models/Town.opt.glb";
 
 // These are your “badge” houses (match the ids used in your store/progress)
 const BADGE_IDS = ["about", "projects", "cv", "skill"] as const;

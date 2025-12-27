@@ -51,7 +51,7 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
       else (ref as any).current = controllerRef.current;
     }, [ref]);
 
-    const { scene, animations } = useGLTF("/models/Player.glb");
+    const { scene, animations } = useGLTF("/models/Player.opt.glb");
     const model = useMemo(() => SkeletonUtils.clone(scene), [scene]);
 
     // ✅ Bind mixer/actions to the INNER model group
@@ -267,4 +267,4 @@ export const PlayerCharacter = forwardRef<THREE.Group, Props>(
   }
 );
 
-useGLTF.preload("/models/Player.glb");
+useGLTF.preload("/models/Player.opt.glb");

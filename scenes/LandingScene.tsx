@@ -1,5 +1,11 @@
 /// <reference types="@react-three/fiber" />
-import React, { useRef, useState, useLayoutEffect, useMemo } from "react";
+import React, {
+  useRef,
+  useState,
+  useLayoutEffect,
+  useMemo,
+  useEffect,
+} from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   Float,
@@ -151,6 +157,7 @@ useGLTF.preload("/models/Bag.glb");
 
 export const LandingScene = () => {
   const chooseStarter = useGameStore((state) => state.chooseStarter);
+  const setIsLoading = useGameStore((state) => state.setIsLoading);
   const [hovered, setHovered] = useState<string | null>(null);
   useCursor(!!hovered);
 
@@ -165,6 +172,12 @@ export const LandingScene = () => {
       rotation: [0, Math.random() * Math.PI, 0] as [number, number, number],
     }));
   }, []);
+
+  useEffect(() => {
+    // When this component mounts, it means Suspense has finished loading assets.
+    // So we can safely hide the loading overlay.
+    setIsLoading(false);
+  }, [setIsLoading]);
 
   return (
     <>

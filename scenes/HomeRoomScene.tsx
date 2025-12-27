@@ -31,7 +31,7 @@ export const HomeRoomScene = () => {
   const prevInteractionRef = useRef<string | null>(null);
   const camTargetRef = useRef(new THREE.Vector3(0, 5, 10));
 
-  const { scene: roomSrc } = useGLTF("/models/Room.glb");
+  const { scene: roomSrc } = useGLTF("/models/Room.opt.glb");
 
   // ✅ clone + scale + extract colliders once
   const { room, colliders } = useMemo(() => {
@@ -257,4 +257,4 @@ export const HomeRoomScene = () => {
   );
 };
 
-useGLTF.preload("/models/Room.glb");
+useGLTF.preload("/models/Room.opt.glb");

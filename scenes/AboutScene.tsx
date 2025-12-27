@@ -63,7 +63,7 @@ export const AboutScene = () => {
 
   return (
     <BuildingBaseScene
-      modelPath="/models/AboutShed.glb"
+      modelPath="/models/AboutShed.opt.glb"
       scale={0.5}
       interactions={interactions}
       fixedCamera={true}
@@ -90,4 +90,4 @@ export const AboutScene = () => {
   );
 };
 
-useGLTF.preload("/models/AboutShed.glb");
+useGLTF.preload("/models/AboutShed.opt.glb");

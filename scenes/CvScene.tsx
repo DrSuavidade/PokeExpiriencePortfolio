@@ -95,7 +95,7 @@ export const CvScene = () => {
 
   return (
     <BuildingBaseScene
-      modelPath="/models/CvTrial.glb"
+      modelPath="/models/CvTrial.opt.glb"
       scale={0.5}
       interactions={interactions}
       teleports={teleports}
@@ -123,4 +123,4 @@ export const CvScene = () => {
   );
 };
 
-useGLTF.preload("/models/CvTrial.glb");
+useGLTF.preload("/models/CvTrial.opt.glb");

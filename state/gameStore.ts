@@ -96,7 +96,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   interactAction: null,
   introDone: false,
   setIntroDone: (done) => set({ introDone: done }),
-  isLoading: false,
+  isLoading: true,
   setIsLoading: (loading) => set({ isLoading: loading }),
 
   badgeNotification: null,

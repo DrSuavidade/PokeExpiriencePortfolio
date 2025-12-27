@@ -124,7 +124,7 @@ export const ProjectsScene = () => {
 
   return (
     <BuildingBaseScene
-      modelPath="/models/Galery.glb"
+      modelPath="/models/Galery.opt.glb"
       scale={0.1} // Huge model
       interactions={interactions}
       teleports={teleports}
@@ -133,4 +133,4 @@ export const ProjectsScene = () => {
   );
 };
 
-useGLTF.preload("/models/Galery.glb");
+useGLTF.preload("/models/Galery.opt.glb");

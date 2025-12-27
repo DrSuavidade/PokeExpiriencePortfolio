@@ -232,13 +232,13 @@ export const BattleScene = () => {
   const playerModelPath = useMemo(() => {
     switch (starterId) {
       case "elcoon":
-        return "/models/Racoon.glb";
+        return "/models/Racoon.opt.glb";
       case "slothie":
-        return "/models/Slooth.glb";
+        return "/models/Slooth.opt.glb";
       case "tigguin":
-        return "/models/Tiguin.glb";
+        return "/models/Tiguin.opt.glb";
       default:
-        return "/models/Racoon.glb";
+        return "/models/Racoon.opt.glb";
     }
   }, [starterId]);
 
@@ -330,6 +330,6 @@ export const BattleScene = () => {
 };
 
 useGLTF.preload("/models/Enemy.glb");
-useGLTF.preload("/models/Racoon.glb");
-useGLTF.preload("/models/Slooth.glb");
-useGLTF.preload("/models/Tiguin.glb");
+useGLTF.preload("/models/Racoon.opt.glb");
+useGLTF.preload("/models/Slooth.opt.glb");
+useGLTF.preload("/models/Tiguin.opt.glb");

@@ -32,7 +32,7 @@ export const SkillScene = () => {
 
   return (
     <BuildingBaseScene
-      modelPath="/models/GameHouse.glb"
+      modelPath="/models/GameHouse.opt.glb"
       scale={0.5}
       interactions={interactions}
       fixedCamera={true}
@@ -41,4 +41,4 @@ export const SkillScene = () => {
   );
 };
 
-useGLTF.preload("/models/GameHouse.glb");
+useGLTF.preload("/models/GameHouse.opt.glb");
