@@ -208,18 +208,6 @@ export const useGameStore = create<GameState>((set, get) => ({
   }),
 
   resetGame: () => {
-    set({ isLoading: true });
-    setTimeout(() => {
-      set({
-        scene: "landing",
-        starter: undefined,
-        activeBuildingId: undefined,
-        menuOpen: false,
-        progress: { defeatedNPCs: {}, unlockedSecret: false },
-        interactionText: null,
-        interactAction: null
-      });
-      setTimeout(() => set({ isLoading: false }), 800);
-    }, 600);
-  }
+    window.location.reload();
+  },
 }));

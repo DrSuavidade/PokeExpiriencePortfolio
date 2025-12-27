@@ -17,7 +17,6 @@ export const UIOverlay = () => {
     activeBuildingId,
     setScene,
     progress,
-    markDefeated,
     resetGame,
     interactionText,
     interactAction,

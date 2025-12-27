@@ -100,17 +100,17 @@ const THREE_BattleContent = ({
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]}>
         <planeGeometry args={[100, 100]} />
         <MeshReflectorMaterial
-          blur={[50, 50]}
-          resolution={256}
-          mixBlur={0.2}
-          mixStrength={1}
-          roughness={1}
-          depthScale={1.0}
-          minDepthThreshold={0.5}
-          maxDepthThreshold={1.5}
+          blur={[300, 100]}
+          resolution={1024}
+          mixBlur={1}
+          mixStrength={40}
+          roughness={0.7}
+          depthScale={1.2}
+          minDepthThreshold={0.4}
+          maxDepthThreshold={1.4}
           color="#151515"
           metalness={0.5}
-          mirror={1}
+          mirror={0.5}
         />
       </mesh>
 
