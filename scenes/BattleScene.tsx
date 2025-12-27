@@ -28,7 +28,6 @@ const RenderModel = ({
         o.castShadow = true;
         o.receiveShadow = true;
 
-        // Fix: Force depth writing and testing to solve "elements in back appearing in front" issues
         if (o.material) {
           const mats = Array.isArray(o.material) ? o.material : [o.material];
           mats.forEach((m: any) => {
@@ -60,6 +59,9 @@ const THREE_BattleContent = ({
   enemyModelPath,
   playerColor,
   enemyColor,
+  isBlocking,
+  isMeditating,
+  attackMultiplier,
 }: any) => {
   return (
     <>
@@ -71,8 +73,8 @@ const THREE_BattleContent = ({
         far={200}
         onUpdate={(c) => c.lookAt(0, 0, 0)}
       />
-      <ambientLight intensity={1} />
-      <pointLight position={[10, 10, 10]} intensity={2.5} color="#88aaff" />
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} intensity={1.5} color="#88aaff" />
       <spotLight
         position={[-10, 10, -10]}
         intensity={2.5}
@@ -101,15 +103,18 @@ const THREE_BattleContent = ({
         />
       </mesh>
 
-      {/* Arena Grid */}
       <gridHelper args={[40, 40, "#555", "#222"]} position={[0, -1.95, 0]} />
-
-      {/* Atmosphere */}
       <fog attach="fog" args={["#000", 20, 45]} />
 
-      {/* Player Side Platform */}
+      {/* Platforms */}
       <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
         <mesh position={[4, 0, 4]} rotation={[0, Math.PI / 4, 0]}>
+          <cylinderGeometry args={[2.5, 2.5, 0.4, 32]} />
+          <meshStandardMaterial color="#333" metalness={0.8} roughness={0.2} />
+        </mesh>
+      </Float>
+      <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
+        <mesh position={[-4, 0, -4]} rotation={[0, Math.PI / 4, 0]}>
           <cylinderGeometry args={[2.5, 2.5, 0.4, 32]} />
           <meshStandardMaterial color="#333" metalness={0.8} roughness={0.2} />
         </mesh>
@@ -119,9 +124,38 @@ const THREE_BattleContent = ({
       <group position={[4, 0.5, 4]} ref={playerRef}>
         <RenderModel
           path={playerModelPath}
-          scale={1}
+          scale={1.2}
           rotation={[0, -Math.PI / 4 - Math.PI / 2, 0]}
         />
+
+        {/* Meditation Glow */}
+        {attackMultiplier > 1 && (
+          <group>
+            <pointLight intensity={10} distance={4} color="#ff3333" />
+            <mesh scale={1.2}>
+              <sphereGeometry args={[2, 14, 14]} />
+              <meshBasicMaterial color="#ff0000" transparent opacity={0.08} />
+            </mesh>
+          </group>
+        )}
+
+        {/* Blocking Shield */}
+        {isBlocking && (
+          <mesh position={[-1, 1, -1]} rotation={[0, Math.PI / 4, 0]}>
+            <torusGeometry args={[1.5, 0.05, 16, 100]} />
+            <meshBasicMaterial color="#4488ff" transparent opacity={0.8} />
+            <mesh scale={[1, 1, 0.1]}>
+              <sphereGeometry args={[1.5, 32, 32]} />
+              <meshPhongMaterial
+                color="#88ccff"
+                transparent
+                opacity={0.3}
+                shininess={100}
+              />
+            </mesh>
+          </mesh>
+        )}
+
         <pointLight
           intensity={3}
           distance={8}
@@ -129,14 +163,6 @@ const THREE_BattleContent = ({
           position={[0, 1, 0]}
         />
       </group>
-
-      {/* Enemy Side Platform */}
-      <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
-        <mesh position={[-4, 0, -4]} rotation={[0, Math.PI / 4, 0]}>
-          <cylinderGeometry args={[2.5, 2.5, 0.4, 32]} />
-          <meshStandardMaterial color="#333" metalness={0.8} roughness={0.2} />
-        </mesh>
-      </Float>
 
       {/* Enemy Monster */}
       <group position={[-4, 0.5, -4]} ref={enemyRef}>
@@ -185,6 +211,11 @@ export const BattleScene = () => {
   const playerRef = useRef<THREE.Group>(null);
   const enemyRef = useRef<THREE.Group>(null);
 
+  // Animation state
+  const attackAnimProgress = useRef(0);
+  const isAttacking = useRef(false);
+  const prevIsTurn = useRef(battleState.isTurn);
+
   // Map starter ID to model path
   const playerModelPath = useMemo(() => {
     switch (starterId) {
@@ -201,22 +232,53 @@ export const BattleScene = () => {
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
-    const { isBlocking, isMeditating } = battleState;
+    const { isBlocking, isMeditating, isTurn, attackMultiplier } = battleState;
 
-    // Idle wobbles
+    // Detect when turn ends (player attacked)
+    if (prevIsTurn.current && !isTurn && !isBlocking && !isMeditating) {
+      isAttacking.current = true;
+      attackAnimProgress.current = 0;
+    }
+    prevIsTurn.current = isTurn;
+
+    // Movement positions
+    const playerBasePos = new THREE.Vector3(4, 0.5, 4);
+    const enemyBasePos = new THREE.Vector3(-4, 0.5, -4);
+
+    // Player Animation
     if (playerRef.current) {
-      playerRef.current.position.y = 0.5 + Math.sin(t * 2) * 0.1;
-      playerRef.current.rotation.z = Math.sin(t * 1.5) * 0.05;
+      if (isAttacking.current) {
+        // Attack Lunge Animation
+        attackAnimProgress.current += delta * 2.5;
+        const p = attackAnimProgress.current;
 
-      // Visual feedback for block/meditate
-      if (isBlocking) {
-        playerRef.current.scale.setScalar(1 + Math.sin(t * 10) * 0.05);
+        // Go forth and back using a sine wave for smooth transition [0 -> 1 -> 0]
+        // But we want to spend some time at the enemy
+        const curve = Math.sin(Math.min(p, 1) * Math.PI);
+        playerRef.current.position.lerpVectors(
+          playerBasePos,
+          enemyBasePos.clone().add(new THREE.Vector3(1.5, 0, 1.5)),
+          curve
+        );
+
+        if (p >= 1) {
+          isAttacking.current = false;
+        }
       } else {
-        playerRef.current.scale.setScalar(1);
-      }
+        // Idle/Status wobble
+        playerRef.current.position.y = 0.5 + Math.sin(t * 2) * 0.1;
+        playerRef.current.rotation.z = Math.sin(t * 1.5) * 0.05;
 
-      if (isMeditating) {
-        playerRef.current.position.y += Math.sin(t * 20) * 0.02;
+        if (isBlocking) {
+          playerRef.current.scale.setScalar(
+            1.2 * (1 + Math.sin(t * 10) * 0.05)
+          );
+        } else if (isMeditating) {
+          playerRef.current.position.y += Math.sin(t * 20) * 0.02;
+          playerRef.current.scale.setScalar(1.2 * (1 + Math.sin(t * 5) * 0.02));
+        } else {
+          playerRef.current.scale.setScalar(1.2);
+        }
       }
     }
 
@@ -225,8 +287,7 @@ export const BattleScene = () => {
       enemyRef.current.rotation.z = Math.cos(t * 2) * 0.05;
     }
 
-    // ✅ Fix: Manual camera update to solve "not rendering right" / lerp issues
-    // Smoothing that matches the rest of the game
+    // Camera follow smoothing
     const followAlpha = 1 - Math.pow(0.001, delta);
     const targetCamPos = new THREE.Vector3(0, 5, 15);
     state.camera.position.lerp(targetCamPos, followAlpha);
@@ -242,12 +303,14 @@ export const BattleScene = () => {
         enemyModelPath="/models/Enemy.glb"
         playerColor={myMonsterData?.color}
         enemyColor={enemyBuilding?.color}
+        isBlocking={battleState.isBlocking}
+        isMeditating={battleState.isMeditating}
+        attackMultiplier={battleState.attackMultiplier}
       />
     </>
   );
 };
 
-// Preload models for immediate loading
 useGLTF.preload("/models/Enemy.glb");
 useGLTF.preload("/models/Racoon.glb");
 useGLTF.preload("/models/Slooth.glb");
