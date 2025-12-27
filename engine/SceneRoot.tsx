@@ -8,7 +8,7 @@ export const SceneRoot = memo(() => {
     <div className="fixed inset-0 z-0">
       <Canvas
         shadows={{ type: THREE.PCFSoftShadowMap }}
-        camera={{ fov: 45, position: [0, 5, 10] }}
+        camera={{ fov: 45, position: [0, 5, 10], near: 0.1, far: 1000 }}
       >
         <Suspense fallback={null}>
           <SceneManager />

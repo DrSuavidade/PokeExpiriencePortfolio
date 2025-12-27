@@ -184,6 +184,8 @@ export const LandingScene = () => {
         angle={0.5}
         penumbra={1}
         castShadow
+        distance={25}
+        decay={2}
       />
       <Environment preset="forest" />
 

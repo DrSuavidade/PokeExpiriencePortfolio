@@ -34,8 +34,11 @@ const RenderModel = ({
             m.transparent = false;
             m.depthWrite = true;
             m.depthTest = true;
-            m.alphaTest = 0;
-            m.needsUpdate = true;
+            if (m.alphaTest === 0) {
+              // Only reset if needed, avoiding redundant updates
+            } else {
+              m.alphaTest = 0;
+            }
           });
         }
       }
@@ -74,13 +77,21 @@ const THREE_BattleContent = ({
         onUpdate={(c) => c.lookAt(0, 0, 0)}
       />
       <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1.5} color="#88aaff" />
+      <pointLight
+        position={[10, 10, 10]}
+        intensity={1.5}
+        color="#88aaff"
+        distance={25}
+        decay={2}
+      />
       <spotLight
         position={[-10, 10, -10]}
         intensity={2.5}
         angle={0.5}
         penumbra={1}
         color="#ffaa88"
+        distance={25}
+        decay={2}
       />
 
       <Environment preset="city" />
@@ -89,14 +100,14 @@ const THREE_BattleContent = ({
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]}>
         <planeGeometry args={[100, 100]} />
         <MeshReflectorMaterial
-          blur={[300, 100]}
-          resolution={1024}
-          mixBlur={1}
-          mixStrength={40}
+          blur={[50, 50]}
+          resolution={256}
+          mixBlur={0.2}
+          mixStrength={1}
           roughness={1}
-          depthScale={1.2}
-          minDepthThreshold={0.4}
-          maxDepthThreshold={1.4}
+          depthScale={1.0}
+          minDepthThreshold={0.5}
+          maxDepthThreshold={1.5}
           color="#151515"
           metalness={0.5}
           mirror={1}
@@ -131,7 +142,7 @@ const THREE_BattleContent = ({
         {/* Meditation Glow */}
         {attackMultiplier > 1 && (
           <group>
-            <pointLight intensity={10} distance={4} color="#ff3333" />
+            <pointLight intensity={10} distance={4} decay={2} color="#ff3333" />
             <mesh scale={1.2}>
               <sphereGeometry args={[2, 14, 14]} />
               <meshBasicMaterial color="#ff0000" transparent opacity={0.08} />
@@ -159,6 +170,7 @@ const THREE_BattleContent = ({
         <pointLight
           intensity={3}
           distance={8}
+          decay={2}
           color={playerColor}
           position={[0, 1, 0]}
         />
@@ -174,6 +186,7 @@ const THREE_BattleContent = ({
         <pointLight
           intensity={3}
           distance={8}
+          decay={2}
           color={enemyColor}
           position={[0, 1, 0]}
         />

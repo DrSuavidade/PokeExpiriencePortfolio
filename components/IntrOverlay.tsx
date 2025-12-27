@@ -137,7 +137,7 @@ const GameBoyIntro: React.FC<GameBoyIntroProps> = ({ onComplete }) => {
         <div className="relative flex flex-col items-center justify-center w-full max-w-6xl px-4">
           <h1
             className="flex flex-wrap justify-center items-baseline text-5xl sm:text-7xl md:text-9xl tracking-tight leading-none mb-4 py-8"
-            style={{ fontFamily: "'Future Bold', sans-serif" }}
+            style={{ fontFamily: "'League Spartan', sans-serif" }}
           >
             {(() => {
               // assign a stable index only to non-space chars

@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -60,26 +62,26 @@
 }
 
 .loadingOverlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
 
-    /* Full black background (no transparency) */
-    background: #000;
+  /* Full black background (no transparency) */
+  background: #000;
 
-    /* No longer using grid centering */
-    pointer-events: all;
+  /* No longer using grid centering */
+  pointer-events: all;
 }
 
 /* Lottie container pinned to bottom-right */
 .loadingLottieWrap {
-    position: absolute;
-    right: 24px;
-    bottom: 24px;
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
 
-    width: 220px;
-    height: 220px;
+  width: 220px;
+  height: 220px;
 
-    display: grid;
-    place-items: center;
+  display: grid;
+  place-items: center;
 }

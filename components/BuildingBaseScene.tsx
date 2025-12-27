@@ -163,10 +163,18 @@ export const BuildingBaseScene: React.FC<BuildingBaseSceneProps> = ({
           if (o.material) {
             const mats = Array.isArray(o.material) ? o.material : [o.material];
             mats.forEach((m: any) => {
-              m.transparent = false;
-              m.depthWrite = true;
-              m.depthTest = true;
-              m.alphaTest = 0;
+              if (m.transparent !== false) {
+                m.transparent = false;
+                m.needsUpdate = true;
+              }
+              if (m.depthWrite !== true) {
+                m.depthWrite = true;
+                m.needsUpdate = true;
+              }
+              if (m.alphaTest !== 0) {
+                m.alphaTest = 0;
+                m.needsUpdate = true;
+              }
             });
           }
         }

@@ -119,11 +119,23 @@ export const CityMapScene = () => {
       if (o?.isMesh && o.material) {
         const mats = Array.isArray(o.material) ? o.material : [o.material];
         mats.forEach((m: any) => {
-          m.transparent = false;
-          m.depthWrite = true;
-          m.depthTest = true;
-          m.alphaTest = 0; // important if exporter sets it oddly
-          m.needsUpdate = true;
+          // Only update if necessary to avoid redundant assignments
+          if (m.transparent !== false) {
+            m.transparent = false;
+            m.needsUpdate = true;
+          }
+          if (m.depthWrite !== true) {
+            m.depthWrite = true;
+            m.needsUpdate = true;
+          }
+          if (m.depthTest !== true) {
+            m.depthTest = true;
+            m.needsUpdate = true;
+          }
+          if (m.alphaTest !== 0) {
+            m.alphaTest = 0; // important if exporter sets it oddly
+            m.needsUpdate = true;
+          }
         });
       }
     });
@@ -336,7 +348,7 @@ export const CityMapScene = () => {
         position={[20, 20, 20]}
         intensity={2.5}
         castShadow
-        shadow-mapSize={[8048, 8048]}
+        shadow-mapSize={[4096, 4096]}
         shadow-bias={-0.0001}
         shadow-normalBias={0.02}
         shadow-camera-near={1}

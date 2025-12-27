@@ -225,7 +225,12 @@ export const HomeRoomScene = () => {
         shadow-camera-bottom={-8}
       />
 
-      <pointLight position={[0, 4, 0]} intensity={0.6} distance={20} />
+      <pointLight
+        position={[0, 4, 0]}
+        intensity={0.6}
+        distance={20}
+        decay={2}
+      />
 
       <Environment preset="apartment" />
 
