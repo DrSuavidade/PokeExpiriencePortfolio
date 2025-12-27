@@ -119,6 +119,12 @@ export const LetterInterface: React.FC = () => {
     if (letterOpen) {
       setIsVisible(true);
       setTimeout(() => setIsAnimating(true), 50);
+
+      // Award "about" badge if we are in the About house
+      const state = useGameStore.getState();
+      if (state.scene === "about") {
+        state.awardBadge("about");
+      }
     } else {
       setIsAnimating(false);
       const timer = setTimeout(() => setIsVisible(false), 500);

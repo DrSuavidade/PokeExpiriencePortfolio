@@ -46,6 +46,16 @@ export const GameConsole = () => {
     });
   };
 
+  // Skill Badge Timer (1 min)
+  React.useEffect(() => {
+    const awardBadge = useGameStore.getState().awardBadge;
+    const timer = setTimeout(() => {
+      awardBadge("skill");
+    }, 60000); // 1 minute
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Keyboard navigation
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

@@ -137,7 +137,6 @@ export const BattleHUD = () => {
   };
 
   const triggerVictory = () => {
-    if (buildingId) markDefeated(buildingId);
     useGameStore.getState().setReturnWaypoint("waypointCv");
     setDialog({
       open: true,
@@ -146,6 +145,7 @@ export const BattleHUD = () => {
         enemyBuilding?.label || "Guardian"
       } and earned your reward! Returning to the tower...`,
       onClose: () => {
+        if (buildingId) markDefeated(buildingId);
         setScene(buildingId as any);
       },
     });

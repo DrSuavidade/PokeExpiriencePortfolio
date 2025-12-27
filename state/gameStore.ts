@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { SceneId, StarterId, Progress } from "../types";
+import { buildings } from "../data/buildings";
 
 interface GameState {
   scene: SceneId;
@@ -28,6 +29,7 @@ interface GameState {
   setScene: (scene: SceneId) => void;
   chooseStarter: (starter: StarterId) => void;
   enterBuilding: (buildingId: string) => void;
+  awardBadge: (badgeId: string) => void;
   markDefeated: (buildingId: string) => void;
   toggleMenu: (open?: boolean) => void;
   setInteraction: (text: string | null, action: (() => void) | null) => void;
@@ -36,6 +38,10 @@ interface GameState {
   setIntroDone: (done: boolean) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+
+  // Badge Notification
+  badgeNotification: { id: string; name: string } | null;
+  clearBadgeNotification: () => void;
 
   // Dialog System
   dialog: {
@@ -90,6 +96,38 @@ export const useGameStore = create<GameState>((set, get) => ({
   isLoading: false,
   setIsLoading: (loading) => set({ isLoading: loading }),
 
+  badgeNotification: null,
+  clearBadgeNotification: () => set({ badgeNotification: null }),
+
+  awardBadge: (id) => {
+    const { progress } = get();
+    if (progress.defeatedNPCs[id]) return;
+
+    const building = buildings.find(b => b.id === id);
+    const badgeName = building?.label || id.toUpperCase();
+
+    const newDefeated = { ...progress.defeatedNPCs, [id]: true };
+    const defeatedCount = Object.values(newDefeated).filter(Boolean).length;
+    const unlockedSecret = defeatedCount >= 4; // 4 badges total
+
+    set({
+      progress: {
+        defeatedNPCs: newDefeated,
+        unlockedSecret
+      },
+      badgeNotification: { id, name: badgeName }
+    });
+
+    // Auto-clear notification after 6 seconds (to match fade-out)
+    setTimeout(() => {
+      get().clearBadgeNotification();
+    }, 6000);
+  },
+
+  markDefeated: (buildingId) => {
+    get().awardBadge(buildingId);
+  },
+
   dialog: { open: false },
   setDialog: (dialog) => set({ dialog }),
 
@@ -136,21 +174,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       });
       setTimeout(() => set({ isLoading: false }), 800);
     }, 600);
-  },
-
-  markDefeated: (buildingId) => {
-    const { progress } = get();
-    const newDefeated = { ...progress.defeatedNPCs, [buildingId]: true };
-    const defeatedCount = Object.values(newDefeated).filter(Boolean).length;
-    // Example: unlock secret after 3 buildings
-    const unlockedSecret = defeatedCount >= 3;
-
-    set({
-      progress: {
-        defeatedNPCs: newDefeated,
-        unlockedSecret
-      }
-    });
   },
 
   toggleMenu: (open) => set((state) => ({ menuOpen: open ?? !state.menuOpen })),

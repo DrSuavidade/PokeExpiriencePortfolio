@@ -51,6 +51,24 @@ export const buildings: Building[] = [
     }
   },
   {
+    id: "skill",
+    label: "Skill Arena",
+    position: [-2, 0, 4], // Nearby projects
+    color: "#22c55e", // Greenish
+    npcName: "Grandmaster",
+    description: "A futuristic training ground for digital masters.",
+    content: {
+      title: "Skill Mastery Arena",
+      body: "Show your dedication to the craft. 1 minute of focus is required to earn the mark of mastery.",
+      items: [
+        "React Mastery",
+        "3D Rendering Prowess",
+        "State Management Zen",
+        "Logic & Algorithms"
+      ]
+    }
+  },
+  {
     id: "contact",
     label: "Contact Post",
     position: [4, 0, 3],

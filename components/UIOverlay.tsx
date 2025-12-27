@@ -6,6 +6,7 @@ import { Menu } from "./Menu";
 import { GameConsole } from "./GameConsole";
 import { LetterInterface } from "./LetterInterface";
 import { BattleHUD } from "./BattleHUD";
+import { BadgeNotification } from "./BadgeNotification";
 
 export const UIOverlay = () => {
   const {
@@ -284,6 +285,7 @@ export const UIOverlay = () => {
       {consoleOpen && <GameConsole />}
       {scene === "battle" && <BattleHUD />}
       <LetterInterface />
+      <BadgeNotification />
     </>
   );
 };
