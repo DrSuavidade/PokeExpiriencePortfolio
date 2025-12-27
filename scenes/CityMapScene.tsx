@@ -31,6 +31,9 @@ export const CityMapScene = () => {
 
   const dialog = useGameStore((s) => s.dialog);
   const setDialog = useGameStore((s) => s.setDialog);
+  const menuOpen = useGameStore((s) => s.menuOpen);
+  const consoleOpen = useGameStore((s) => s.consoleOpen);
+  const letterOpen = useGameStore((s) => s.letterOpen);
 
   const defeatedNPCs = useGameStore((s) => s.progress.defeatedNPCs);
 
@@ -264,8 +267,9 @@ export const CityMapScene = () => {
     const playerPos = playerRef.current?.position;
     if (!playerPos) return;
 
-    // If dialog is open, don't offer interactions
-    if (dialog.open) {
+    // If dialog or any menu is open, don't offer interactions
+    const isOverlaid = dialog.open || menuOpen || consoleOpen || letterOpen;
+    if (isOverlaid) {
       if (prevInteractionRef.current !== null) {
         setInteraction(null, null);
         prevInteractionRef.current = null;

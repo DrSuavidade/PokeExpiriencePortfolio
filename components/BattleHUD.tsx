@@ -37,6 +37,7 @@ export const BattleHUD = () => {
 
       updateBattle({
         message: `${enemyBuilding?.label || "Guardian"} attacks!`,
+        lastAction: "enemy-attack",
       });
 
       let eDmg = 15 + Math.floor(Math.random() * 10);
@@ -60,6 +61,7 @@ export const BattleHUD = () => {
           playerHp: Math.max(0, playerHp - eDmg),
           isTurn: true,
           isBlocking: false,
+          lastAction: null,
         });
 
         setTimeout(
@@ -82,6 +84,7 @@ export const BattleHUD = () => {
       message: `${myMonster?.name || "Player"} used TACKLE!${
         attackMultiplier > 1 ? " (POWERED UP)" : ""
       }`,
+      lastAction: "player-attack",
     });
 
     setTimeout(() => {
@@ -92,6 +95,7 @@ export const BattleHUD = () => {
         enemyHp: newEnemyHp,
         attackMultiplier: 1,
         isMeditating: false,
+        lastAction: null,
       });
 
       if (newEnemyHp <= 0) {

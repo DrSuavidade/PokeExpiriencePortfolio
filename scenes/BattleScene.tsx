@@ -212,9 +212,8 @@ export const BattleScene = () => {
   const enemyRef = useRef<THREE.Group>(null);
 
   // Animation state
-  const attackAnimProgress = useRef(0);
-  const isAttacking = useRef(false);
-  const prevIsTurn = useRef(battleState.isTurn);
+  const playerAttackAnimProgress = useRef(0);
+  const enemyAttackAnimProgress = useRef(0);
 
   // Map starter ID to model path
   const playerModelPath = useMemo(() => {
@@ -232,14 +231,8 @@ export const BattleScene = () => {
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
-    const { isBlocking, isMeditating, isTurn, attackMultiplier } = battleState;
-
-    // Detect when turn ends (player attacked)
-    if (prevIsTurn.current && !isTurn && !isBlocking && !isMeditating) {
-      isAttacking.current = true;
-      attackAnimProgress.current = 0;
-    }
-    prevIsTurn.current = isTurn;
+    const { isBlocking, isMeditating, lastAction, attackMultiplier } =
+      battleState;
 
     // Movement positions
     const playerBasePos = new THREE.Vector3(4, 0.5, 4);
@@ -247,28 +240,24 @@ export const BattleScene = () => {
 
     // Player Animation
     if (playerRef.current) {
-      if (isAttacking.current) {
-        // Attack Lunge Animation
-        attackAnimProgress.current += delta * 2.5;
-        const p = attackAnimProgress.current;
+      if (lastAction === "player-attack") {
+        playerAttackAnimProgress.current += delta * 2.5;
+        const p = Math.min(playerAttackAnimProgress.current, 1);
+        const curve = Math.sin(p * Math.PI);
 
-        // Go forth and back using a sine wave for smooth transition [0 -> 1 -> 0]
-        // But we want to spend some time at the enemy
-        const curve = Math.sin(Math.min(p, 1) * Math.PI);
-        playerRef.current.position.lerpVectors(
-          playerBasePos,
-          enemyBasePos.clone().add(new THREE.Vector3(1.5, 0, 1.5)),
-          curve
-        );
-
-        if (p >= 1) {
-          isAttacking.current = false;
-        }
+        const targetLunge = enemyBasePos
+          .clone()
+          .add(new THREE.Vector3(1.5, 0, 1.5));
+        // Force the position to be relative to the curve to ensure return
+        playerRef.current.position.copy(playerBasePos).lerp(targetLunge, curve);
       } else {
-        // Idle/Status wobble
+        playerAttackAnimProgress.current = 0;
         playerRef.current.position.y = 0.5 + Math.sin(t * 2) * 0.1;
+        playerRef.current.position.x = playerBasePos.x;
+        playerRef.current.position.z = playerBasePos.z;
         playerRef.current.rotation.z = Math.sin(t * 1.5) * 0.05;
 
+        // Visual multipliers for states
         if (isBlocking) {
           playerRef.current.scale.setScalar(
             1.2 * (1 + Math.sin(t * 10) * 0.05)
@@ -282,9 +271,25 @@ export const BattleScene = () => {
       }
     }
 
+    // Enemy Animation
     if (enemyRef.current) {
-      enemyRef.current.position.y = 0.5 + Math.sin(t * 1.8) * 0.1;
-      enemyRef.current.rotation.z = Math.cos(t * 2) * 0.05;
+      if (lastAction === "enemy-attack") {
+        enemyAttackAnimProgress.current += delta * 2.5;
+        const p = Math.min(enemyAttackAnimProgress.current, 1);
+        const curve = Math.sin(p * Math.PI);
+
+        const targetLunge = playerBasePos
+          .clone()
+          .add(new THREE.Vector3(-1.5, 0, -1.5));
+        enemyRef.current.position.copy(enemyBasePos).lerp(targetLunge, curve);
+      } else {
+        enemyAttackAnimProgress.current = 0;
+        enemyRef.current.position.y = 0.5 + Math.sin(t * 1.8) * 0.1;
+        enemyRef.current.position.x = enemyBasePos.x;
+        enemyRef.current.position.z = enemyBasePos.z;
+        enemyRef.current.rotation.z = Math.cos(t * 2) * 0.05;
+        enemyRef.current.scale.setScalar(1);
+      }
     }
 
     // Camera follow smoothing

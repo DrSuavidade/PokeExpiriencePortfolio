@@ -17,6 +17,7 @@ interface GameState {
     isBlocking: boolean;
     isMeditating: boolean;
     attackMultiplier: number;
+    lastAction: "player-attack" | "enemy-attack" | null;
   };
 
   // Interaction System
@@ -79,6 +80,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     isBlocking: false,
     isMeditating: false,
     attackMultiplier: 1,
+    lastAction: null,
   },
 
   interactionText: null,
@@ -166,6 +168,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       isBlocking: false,
       isMeditating: false,
       attackMultiplier: 1,
+      lastAction: null,
     }
   }),
 
