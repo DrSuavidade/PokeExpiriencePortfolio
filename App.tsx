@@ -2,6 +2,7 @@ import React, { Suspense } from "react";
 import GameBoyIntro from "./components/IntrOverlay";
 import LoadingOverlay from "./components/LoadingOverlay";
 import { useGameStore } from "./state/gameStore";
+import { AudioManager } from "./components/AudioManager";
 
 // Lazy-load heavy stuff so Three.js/r3f isn't in the initial bundle
 const SceneRoot = React.lazy(() =>
@@ -18,6 +19,7 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-black relative">
+      <AudioManager />
       {!introDone && <GameBoyIntro onComplete={() => setIntroDone(true)} />}
 
       {/* Only show loader once intro is done */}

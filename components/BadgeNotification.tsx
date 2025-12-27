@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useGameStore } from "../state/gameStore";
 import { buildings } from "../data/buildings";
+import { playSfx } from "./AudioManager";
 
 export const BadgeNotification = () => {
   const notification = useGameStore((s) => s.badgeNotification);
@@ -20,7 +21,7 @@ export const BadgeNotification = () => {
     if (notification) {
       setLocalDisplay(notification);
       setVisible(true);
-
+      playSfx("success");
       const timer = setTimeout(() => {
         setVisible(false);
       }, 5000);

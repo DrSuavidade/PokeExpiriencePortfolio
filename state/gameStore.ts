@@ -36,6 +36,10 @@ interface GameState {
   resetGame: () => void;
   introDone: boolean;
   setIntroDone: (done: boolean) => void;
+
+  introStarted: boolean;
+  setIntroStarted: (started: boolean) => void;
+
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
 
@@ -96,6 +100,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   interactAction: null,
   introDone: false,
   setIntroDone: (done) => set({ introDone: done }),
+
+  introStarted: false,
+  setIntroStarted: (started) => set({ introStarted: started }),
+
   isLoading: true,
   setIsLoading: (loading) => set({ isLoading: loading }),
 

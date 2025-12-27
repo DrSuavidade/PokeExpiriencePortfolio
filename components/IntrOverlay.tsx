@@ -1,23 +1,27 @@
 import React, { useEffect, useState } from "react";
+// Import Howler to unlock audio context on click
+import { Howler } from "howler";
+import { useGameStore } from "../state/gameStore";
 
 export interface GameBoyIntroProps {
   onComplete?: () => void;
 }
 
 const GameBoyIntro: React.FC<GameBoyIntroProps> = ({ onComplete }) => {
-  const [stage, setStage] = useState(0); // 0: Init, 1: Fly-in, 2: Color Consolidate + Subtext, 3: Fade out
-  // True stagger control: how many non-space letters have been triggered
+  // NEW: Wait for user interaction
+  const introStarted = useGameStore((s) => s.introStarted);
+  const setIntroStarted = useGameStore((s) => s.setIntroStarted);
+
+  const [stage, setStage] = useState(0);
   const [activeCount, setActiveCount] = useState(0);
 
   const text = "PEDRO D COSTA";
   const letters = text.split("");
   const animatedLetters = text.replace(/\s/g, "").length;
 
-  // --- Animation tuning ---
   const FLY_DURATION_S = 0.85;
   const STAGGER_S = 0.12;
 
-  // GBA-ish rainbow palette
   const rainbowColors = [
     "#FF0055",
     "#FF9900",
@@ -28,7 +32,20 @@ const GameBoyIntro: React.FC<GameBoyIntroProps> = ({ onComplete }) => {
     "#CC00FF",
   ];
 
+  // --- NEW: Handle Start Click ---
+  const handleStart = () => {
+    // 1. Unlock Audio Engine manually (Fixes silent audio)
+    if (Howler.ctx && Howler.ctx.state === "suspended") {
+      Howler.ctx.resume();
+    }
+    // 2. Start Animation
+    setIntroStarted(true);
+  };
+
   useEffect(() => {
+    // NEW: Don't run sequence until started
+    if (!introStarted) return;
+
     const sequence = async () => {
       await new Promise((r) => setTimeout(r, 100));
       setStage(1);
@@ -48,15 +65,12 @@ const GameBoyIntro: React.FC<GameBoyIntroProps> = ({ onComplete }) => {
     };
 
     sequence();
-  }, [onComplete, animatedLetters, FLY_DURATION_S, STAGGER_S]);
+  }, [onComplete, animatedLetters, FLY_DURATION_S, STAGGER_S, introStarted]);
 
-  // If we reached later stages, make sure every letter is visible no matter what.
   useEffect(() => {
     if (stage >= 2) setActiveCount(animatedLetters);
   }, [stage, animatedLetters]);
 
-  // ✅ TRUE stagger: activate 1 more character every STAGGER interval
-  // ✅ True stagger + catch-up, but WITHOUT per-frame updates (less lag)
   useEffect(() => {
     if (stage !== 1) return;
 
@@ -79,14 +93,12 @@ const GameBoyIntro: React.FC<GameBoyIntroProps> = ({ onComplete }) => {
       }
 
       if (last < animatedLetters) {
-        // Schedule next check close to the next boundary, but it will still "catch up" if delayed.
         const nextBoundary = start + last * stepMs;
         const delay = Math.max(0, nextBoundary - now);
         timeoutId = window.setTimeout(tick, delay);
       }
     };
 
-    // start with first letter immediately
     last = 1;
     setActiveCount(1);
     timeoutId = window.setTimeout(tick, stepMs);
@@ -118,21 +130,35 @@ const GameBoyIntro: React.FC<GameBoyIntroProps> = ({ onComplete }) => {
               filter: blur(0px);
             }
           }
-
-          .gba-letter {
-            display: inline-block;
-            white-space: pre;
-            will-change: transform, opacity, filter;
-          }
-
+          .gba-letter { display: inline-block; white-space: pre; will-change: transform, opacity, filter; }
           .gba-letter-space { width: 0.3em; }
+          .blink { animation: blinker 1s linear infinite; }
+          @keyframes blinker { 50% { opacity: 0; } }
         `}
       </style>
+
+      {/* --- NEW: Start Screen Overlay --- */}
+      {!introStarted && (
+        <div
+          onClick={handleStart}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black cursor-pointer"
+        >
+          <div className="text-center">
+            <h1 className="text-white pixel-font text-2xl mb-4 text-yellow-400">
+              PORTFOLIO QUEST
+            </h1>
+            <p className="text-white/50 pixel-font text-xs blink">
+              CLICK TO START
+            </p>
+          </div>
+        </div>
+      )}
 
       <div
         className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-white transition-opacity duration-700 ${
           stage === 3 ? "opacity-0" : "opacity-100"
         }`}
+        style={{ pointerEvents: introStarted ? "auto" : "none" }} // Prevent interaction behind start screen
       >
         <div className="relative flex flex-col items-center justify-center w-full max-w-6xl px-4">
           <h1
@@ -140,7 +166,6 @@ const GameBoyIntro: React.FC<GameBoyIntroProps> = ({ onComplete }) => {
             style={{ fontFamily: "'League Spartan', sans-serif" }}
           >
             {(() => {
-              // assign a stable index only to non-space chars
               let nonSpace = 0;
               const items = letters.map((char, index) => {
                 const animIndex = char === " " ? null : nonSpace++;
@@ -153,7 +178,6 @@ const GameBoyIntro: React.FC<GameBoyIntroProps> = ({ onComplete }) => {
                 const isActive =
                   !isSpace && animIndex != null && animIndex < activeCount;
 
-                // vary arc a bit per letter
                 const t =
                   isSpace || animIndex == null
                     ? 0
@@ -177,8 +201,6 @@ const GameBoyIntro: React.FC<GameBoyIntroProps> = ({ onComplete }) => {
                     }`}
                     style={{
                       color: stage >= 2 ? finalColor : initialColor,
-
-                      // keep not-yet-active letters hidden + off-screen
                       ...(stage >= 1 && !isSpace && !isActive
                         ? ({
                             transform:
@@ -187,19 +209,15 @@ const GameBoyIntro: React.FC<GameBoyIntroProps> = ({ onComplete }) => {
                             filter: "blur(2px)",
                           } as React.CSSProperties)
                         : {}),
-
-                      // animate only when activated
                       animation:
                         !isSpace && stage >= 1 && isActive
                           ? `gbaArcIn ${FLY_DURATION_S}s cubic-bezier(0.16, 0.84, 0.32, 1.12) both`
                           : "none",
-
                       transition: "color 0.8s ease-out",
                       textShadow:
                         stage >= 2
                           ? "2px 4px 0px rgba(0,0,0,0.1)"
                           : "4px 8px 0px rgba(0,0,0,0.05)",
-
                       ...(isSpace
                         ? {}
                         : ({
