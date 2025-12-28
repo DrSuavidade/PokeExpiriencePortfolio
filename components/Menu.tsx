@@ -16,6 +16,7 @@ export const Menu = () => {
     letterOpen,
     setScene,
     enterBuilding,
+    isDeskView,
   } = useGameStore();
   const [view, setView] = useState<MenuView>("main");
   const [hoveredIdx, setHoveredIdx] = useState(0);
@@ -423,6 +424,8 @@ export const Menu = () => {
         );
     }
   };
+
+  if (isDeskView) return null;
 
   return (
     <div className="relative pointer-events-auto">

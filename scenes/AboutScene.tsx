@@ -5,7 +5,14 @@ import { useGameStore } from "../state/gameStore";
 
 export const AboutScene = () => {
   const setDialog = useGameStore((s) => s.setDialog);
+  const setDeskView = useGameStore((s) => s.setDeskView);
   const [cameraMode, setCameraMode] = useState<"normal" | "desk">("normal");
+
+  useEffect(() => {
+    setDeskView(cameraMode === "desk");
+    // Cleanup on unmount or change
+    return () => setDeskView(false);
+  }, [cameraMode, setDeskView]);
 
   // Handle ESC key to exit desk view
   useEffect(() => {

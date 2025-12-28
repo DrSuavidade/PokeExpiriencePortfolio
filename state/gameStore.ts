@@ -63,6 +63,8 @@ interface GameState {
   setLetterOpen: (open: boolean) => void;
   puzzleOpen: boolean;
   setPuzzleOpen: (open: boolean) => void;
+  isDeskView: boolean;
+  setDeskView: (isDesk: boolean) => void;
 
   setDialog: (dialog: {
     open: boolean;
@@ -149,6 +151,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   setLetterOpen: (open) => set({ letterOpen: open }),
   puzzleOpen: false,
   setPuzzleOpen: (open) => set({ puzzleOpen: open }),
+  isDeskView: false,
+  setDeskView: (isDesk) => set({ isDeskView: isDesk }),
 
   setScene: (scene) => {
     const { scene: currentScene } = get();
